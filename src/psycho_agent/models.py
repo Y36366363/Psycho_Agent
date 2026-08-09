@@ -13,6 +13,12 @@ class RiskLevel(StrEnum):
     IMMINENT = "imminent"
 
 
+class RiskSubject(StrEnum):
+    SELF = "self"
+    OTHER = "other"
+    UNCLEAR = "unclear"
+
+
 class ConversationPhase(StrEnum):
     INTAKE = "intake"
     STABILIZE = "stabilize"
@@ -40,12 +46,15 @@ class Strategy(StrEnum):
     PROBLEM_SOLVE = "problem_solve"
     TINY_NEXT_STEP = "tiny_next_step"
     REVIEW_PROGRESS = "review_progress"
+    REPAIR_ALLIANCE = "repair_alliance"
+    SAFETY_FOLLOW_UP = "safety_follow_up"
     CRISIS_SUPPORT = "crisis_support"
 
 
 @dataclass(slots=True)
 class SafetyAssessment:
     level: RiskLevel = RiskLevel.LOW
+    subject: RiskSubject = RiskSubject.UNCLEAR
     matched_signals: list[str] = field(default_factory=list)
     requires_direct_check: bool = False
     rationale: str = "No explicit risk signal detected."
@@ -64,11 +73,22 @@ class UserState:
 
 
 @dataclass(slots=True)
+class AllianceState:
+    """Small process model inspired by bond, goal, and task alignment."""
+
+    goal_aligned: bool = False
+    task_aligned: bool = False
+    rupture_count: int = 0
+    last_rupture_turn: int | None = None
+
+
+@dataclass(slots=True)
 class SessionState:
     session_id: str
     phase: ConversationPhase = ConversationPhase.INTAKE
     user: UserState = field(default_factory=UserState)
     risk: SafetyAssessment = field(default_factory=SafetyAssessment)
+    alliance: AllianceState = field(default_factory=AllianceState)
     turn_count: int = 0
     intake_step: int = 0
     used_strategies: list[Strategy] = field(default_factory=list)

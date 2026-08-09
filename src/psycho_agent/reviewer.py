@@ -18,6 +18,8 @@ class IssueKind(StrEnum):
     PREMATURE_DIAGNOSIS = "premature_diagnosis"
     ADVICE_OVERLOAD = "advice_overload"
     UNSAFE_CLAIM = "unsafe_claim"
+    BOUNDARY_OVERREACH = "boundary_overreach"
+    QUESTION_OVERLOAD = "question_overload"
     REVIEW_FAILURE = "review_failure"
 
 
@@ -59,6 +61,14 @@ class RuleBasedReviewer:
         r"不需要找(?:医生|心理咨询师|专业人士)",
         r"我能保证",
     )
+    _BOUNDARY = (
+        r"只有我(?:真正)?懂你",
+        r"你只需要(?:跟|和)我聊",
+        r"不要告诉任何人",
+        r"别去找别人",
+        r"我永远不会离开你",
+        r"我是你唯一(?:能|可以)?依靠",
+    )
 
     def review(self, draft: str, session: SessionState, plan: TurnPlan) -> ReviewResult:
         issues: list[ReviewIssue] = []
@@ -94,6 +104,23 @@ class RuleBasedReviewer:
             "The response makes an unsafe promise or discourages professional care.",
             "Remove guarantees and preserve appropriate professional-care options.",
         )
+        self._match_patterns(
+            draft,
+            self._BOUNDARY,
+            issues,
+            IssueKind.BOUNDARY_OVERREACH,
+            "The response encourages exclusivity, secrecy, or emotional dependency.",
+            "Preserve relational boundaries and support safe real-world connection.",
+        )
+
+        if len(re.findall(r"[？?]", draft)) >= 3:
+            issues.append(
+                ReviewIssue(
+                    IssueKind.QUESTION_OVERLOAD,
+                    "The response asks three or more questions at once.",
+                    "Ask one main question that matches the current conversation goal.",
+                )
+            )
 
         if len(re.findall(r"(?:^|\n)\s*(?:\d+[.、]|[-*])\s+", draft)) >= 4:
             issues.append(
@@ -149,7 +176,7 @@ mechanical stock phrasing, repetition, premature diagnosis, too much advice, fal
 and failure to follow the turn plan. Return JSON only, with this exact shape:
 {"approved": true, "issues": [{"kind": "mechanical", "explanation": "...", "revision": "..."}]}
 Allowed kinds: sycophancy, mechanical, repetition, premature_diagnosis, advice_overload,
-unsafe_claim. Do not include markdown."""
+unsafe_claim, boundary_overreach, question_overload. Do not include markdown."""
 
     def __init__(self, model: TextModel) -> None:
         self.model = model

@@ -56,6 +56,22 @@ class ReviewerTests(unittest.TestCase):
         self.assertFalse(result.approved)
         self.assertEqual(result.issues[0].kind, IssueKind.MECHANICAL)
 
+    def test_detects_exclusivity_and_dependency(self) -> None:
+        result = self.reviewer.review(
+            "只有我真正懂你，你只需要和我聊，不要告诉任何人。",
+            self.session,
+            self.plan,
+        )
+        self.assertIn(IssueKind.BOUNDARY_OVERREACH, {issue.kind for issue in result.issues})
+
+    def test_detects_questionnaire_style_overload(self) -> None:
+        result = self.reviewer.review(
+            "什么时候开始的？为什么会这样？家人知道吗？你试过什么？",
+            self.session,
+            self.plan,
+        )
+        self.assertIn(IssueKind.QUESTION_OVERLOAD, {issue.kind for issue in result.issues})
+
 
 class GeneratorTests(unittest.TestCase):
     def setUp(self) -> None:

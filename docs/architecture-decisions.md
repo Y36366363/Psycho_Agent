@@ -35,3 +35,21 @@ OpenAI Responses, DeepSeek Chat Completions, and Gemini GenerateContent use sepa
 **Status:** accepted
 
 Deterministic checks run on every normal generated response. An optional semantic model reviewer catches contextual failures that patterns cannot. A rejected draft receives at most one rewrite, preventing loops and unbounded API cost. Fixed crisis responses bypass model generation and rewriting.
+
+## ADR-007: Treat alliance rupture as a routing event
+
+**Status:** accepted
+
+User statements that the agent misunderstood, repeated itself, or became templated update an explicit alliance state. The next strategy repairs the conversational goal or task before offering another intervention.
+
+## ADR-008: Use contrast-set safety evaluation
+
+**Status:** accepted
+
+Safety tests must distinguish self from other, present from historical risk, current intent from explicit denial, and lived disclosures from fictional or general questions. Obvious keyword-positive examples alone are not an adequate safety evaluation.
+
+## ADR-009: Build an evaluation baseline before fine-tuning
+
+**Status:** accepted
+
+Published counseling datasets can inform strategy taxonomy and future evaluation, but fine-tuning is deferred until licensing, provenance, privacy, and a provider-comparison baseline are established.

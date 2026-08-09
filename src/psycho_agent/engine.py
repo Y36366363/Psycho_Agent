@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from .intake import INTAKE_STEPS, build_intake_plan, intake_complete
 from .models import ConversationPhase, RiskLevel, SessionState, Strategy, TurnPlan
-from .safety import assess_safety, crisis_turn
+from .safety import (
+    assess_safety,
+    crisis_follow_up_turn,
+    crisis_turn,
+    safety_resolution_confirmed,
+)
+from .state_update import update_session_state
 from .strategy import build_support_plan
 
 
@@ -19,6 +25,9 @@ class ConversationEngine:
             raise ValueError("user_message must not be empty")
 
         session.turn_count += 1
+        update_session_state(session, user_message)
+        previous_risk = session.risk
+        was_crisis = session.phase is ConversationPhase.CRISIS
         session.risk = assess_safety(user_message)
 
         if session.risk.level in {RiskLevel.ELEVATED, RiskLevel.HIGH, RiskLevel.IMMINENT}:
@@ -41,9 +50,29 @@ class ConversationEngine:
             self._record_plan(session, plan)
             return plan
 
-        if session.phase is ConversationPhase.CRISIS:
-            # A single low-signal message does not automatically clear a prior crisis state.
-            session.phase = ConversationPhase.STABILIZE
+        if was_crisis:
+            if safety_resolution_confirmed(user_message, previous_risk.subject):
+                session.phase = ConversationPhase.STABILIZE
+            else:
+                session.phase = ConversationPhase.CRISIS
+                # Preserve the active crisis subject/level across low-information replies.
+                session.risk = previous_risk
+                response, questions = crisis_follow_up_turn(previous_risk.subject)
+                plan = TurnPlan(
+                    phase=ConversationPhase.CRISIS,
+                    strategy=Strategy.SAFETY_FOLLOW_UP,
+                    response_goal="Confirm concrete present safety before resuming normal support.",
+                    instructions=[
+                        "Keep the focus on concrete current safety and real-world support.",
+                        "Do not treat silence or a vague denial as proof that risk is resolved.",
+                    ],
+                    questions=questions,
+                    safety=session.risk,
+                    should_generate_normally=False,
+                    fixed_response=response,
+                )
+                self._record_plan(session, plan)
+                return plan
 
         if session.phase is ConversationPhase.INTAKE:
             session.learned_facts.append(user_message.strip())

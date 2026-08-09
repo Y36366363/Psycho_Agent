@@ -1,5 +1,10 @@
 # Updates 8/9/2026
 
+- Added a research landscape comparing Woebot, Therabot, ESConv, PsyQA, SoulChat, CPsyCoun, recent safety findings, and Psycho Agent's current gaps.
+- Added 29 offline behavioral cases and multi-turn scenario evaluation covering safety contrasts, state extraction, alliance repair, and response-review failures.
+- Added explicit alliance state, goal alignment, rupture detection, and a repair strategy that interrupts normal advice routing.
+- Improved crisis triage to distinguish self, other-person, historical, negated, fictional, and general-help contexts; crisis state now persists until concrete safety and real-world protection are confirmed.
+- Expanded the unit suite to 41 passing tests and added boundary/dependency and question-overload review checks.
 - Added OpenAI, DeepSeek, and Gemini model adapters with local `.env` configuration and no SDK lock-in.
 - Added natural-response generation plus deterministic and optional model-based review for sycophancy, mechanical phrasing, repetition, premature diagnosis, advice overload, and unsafe claims.
 - Added a bounded one-rewrite workflow, provider connectivity checks, and expanded the offline suite to 26 tests.
@@ -80,6 +85,14 @@ Run tests:
 python -m unittest discover -s tests -v
 ```
 
+Run the research-informed offline behavior suite:
+
+```bash
+python -m psycho_agent.evaluation
+```
+
+The behavioral suite is stored in `evaluations/behavior_cases.jsonl`. It checks safety contrast sets, explicit state extraction, reviewer failures, and multi-turn routing. These cases are engineering invariants, not a clinical validation score.
+
 ## Repository layout
 
 ```text
@@ -91,8 +104,11 @@ src/psycho_agent/
   providers.py    OpenAI, DeepSeek, and Gemini adapters
   reviewer.py     deterministic and semantic response review
   safety.py       conservative first-pass risk triage
+  state_update.py explicit emotion, preference, impact, and rupture signals
   strategy.py     phase-aware support strategy selection
+  evaluation.py   offline behavioral evaluation runner
 tests/            behavior-focused unit tests
+evaluations/      auditable JSONL behavior and scenario cases
 docs/             product and architecture decisions
 ```
 
@@ -102,8 +118,12 @@ This repository is research-stage software. It must not be presented as medical 
 
 ## Roadmap
 
-1. Add a minimal web conversation interface.
-2. Build a reusable evaluation corpus for warmth, non-sycophancy, repetition, and safety.
+1. Add blinded live-provider comparison over shared multi-turn scenarios.
+2. Add a minimal web conversation interface.
 3. Add consent-aware long-term memory and privacy controls.
 4. Add provider fallback and cost/latency instrumentation without logging private content.
 5. Conduct review with qualified mental-health professionals before any public-facing trial.
+
+## Research review
+
+The [research landscape](docs/research-landscape.md) explains what this project borrows from published systems, where it deliberately differs from “AI therapist” claims, and why alliance, strategy fit, epistemic humility, multi-turn progress, and expert oversight must be evaluated separately.
