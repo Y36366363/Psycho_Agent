@@ -23,3 +23,15 @@ Any elevated explicit safety signal bypasses ordinary response generation. The f
 **Status:** accepted
 
 The session remembers recently used strategies and response goals. Routing avoids immediate reuse. Later milestones will add semantic similarity checks across generated responses.
+
+## ADR-005: Keep model providers behind one text interface
+
+**Status:** accepted
+
+OpenAI Responses, DeepSeek Chat Completions, and Gemini GenerateContent use separate adapters behind the same `TextModel` protocol. The psychological-support workflow and reviewer do not depend on a provider-specific SDK.
+
+## ADR-006: Review every normal draft with bounded correction
+
+**Status:** accepted
+
+Deterministic checks run on every normal generated response. An optional semantic model reviewer catches contextual failures that patterns cannot. A rejected draft receives at most one rewrite, preventing loops and unbounded API cost. Fixed crisis responses bypass model generation and rewriting.

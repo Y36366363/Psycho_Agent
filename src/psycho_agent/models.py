@@ -75,6 +75,8 @@ class SessionState:
     learned_facts: list[str] = field(default_factory=list)
     unresolved_threads: list[str] = field(default_factory=list)
     recent_response_goals: list[str] = field(default_factory=list)
+    recent_user_messages: list[str] = field(default_factory=list)
+    recent_assistant_responses: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
