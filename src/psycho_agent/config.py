@@ -30,6 +30,7 @@ def load_dotenv(path: str | Path = ".env", *, override: bool = False) -> bool:
     if not dotenv_path.is_file():
         return False
 
+    parsed: dict[str, str] = {}
     for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#") or "=" not in line:
@@ -39,7 +40,13 @@ def load_dotenv(path: str | Path = ".env", *, override: bool = False) -> bool:
         value = value.strip()
         if value.startswith(("'", '"')) and value[-1:] == value[:1]:
             value = value[1:-1]
-        if key and (override or key not in os.environ):
+        if key:
+            # Match conventional dotenv behavior: the last definition inside one
+            # file wins, while a pre-existing process variable still wins unless
+            # the caller explicitly requests override=True.
+            parsed[key] = value
+    for key, value in parsed.items():
+        if override or key not in os.environ:
             os.environ[key] = value
     return True
 
@@ -65,7 +72,7 @@ class ProviderSettings:
                 "gpt-5-mini",
             ),
             "deepseek": (("DEEPSEEK_API_KEY",), "DEEPSEEK_MODEL", "deepseek-chat"),
-            "gemini": (("GEMINI_API_KEY",), "GEMINI_MODEL", "gemini-2.5-flash"),
+            "gemini": (("GEMINI_API_KEY",), "GEMINI_MODEL", "gemini-3.5-flash"),
         }
         if selected not in definitions:
             supported = ", ".join(sorted(definitions))

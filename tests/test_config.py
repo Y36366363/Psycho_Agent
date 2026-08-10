@@ -35,6 +35,17 @@ class ConfigurationTests(unittest.TestCase):
                 ProviderSettings.from_env("deepseek")
         self.assertIn("placeholder", str(context.exception))
 
+    def test_last_duplicate_in_dotenv_wins(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".env"
+            path.write_text(
+                "OPENAI_API_KEY=your_openai_api_key\nOPENAI_API_KEY=real-test-value\n",
+                encoding="utf-8",
+            )
+            with patch.dict(os.environ, {}, clear=True):
+                load_dotenv(path)
+                self.assertEqual(os.environ["OPENAI_API_KEY"], "real-test-value")
+
 
 if __name__ == "__main__":
     unittest.main()

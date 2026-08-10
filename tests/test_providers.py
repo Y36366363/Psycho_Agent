@@ -1,11 +1,12 @@
 import io
+import http.client
 import unittest
 import urllib.error
 from unittest.mock import patch
 from typing import Any
 
 from psycho_agent.config import ProviderSettings
-from psycho_agent.providers import ModelError, UrllibJsonTransport, create_model
+from psycho_agent.providers import ModelError, UrllibJsonTransport, _verified_ssl_context, create_model
 
 
 class FakeTransport:
@@ -90,6 +91,70 @@ class ProviderAdapterTests(unittest.TestCase):
                 )
         self.assertIn("Authentication failed", str(context.exception))
         self.assertNotIn("sensitive-secret", str(context.exception))
+
+    def test_ssl_context_uses_system_bundle_when_python_has_none(self) -> None:
+        paths = type("Paths", (), {"cafile": None})()
+        sentinel = object()
+        with (
+            patch("psycho_agent.providers.ssl.get_default_verify_paths", return_value=paths),
+            patch("psycho_agent.providers.Path.is_file", return_value=True),
+            patch("psycho_agent.providers.ssl.create_default_context", return_value=sentinel) as create,
+        ):
+            context = _verified_ssl_context()
+        self.assertIs(context, sentinel)
+        create.assert_called_once_with(cafile="/etc/ssl/cert.pem")
+
+    def test_transient_network_error_is_retried(self) -> None:
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self) -> bytes:
+                return b'{"ok": true}'
+
+        transient = urllib.error.URLError("temporary tunnel failure")
+        with (
+            patch("urllib.request.urlopen", side_effect=[transient, Response()]) as opened,
+            patch("psycho_agent.providers.time.sleep"),
+        ):
+            result = UrllibJsonTransport().post(
+                "https://example.invalid",
+                headers={},
+                payload={},
+                timeout=1,
+            )
+        self.assertEqual(result, {"ok": True})
+        self.assertEqual(opened.call_count, 2)
+
+    def test_remote_disconnect_is_retried(self) -> None:
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self) -> bytes:
+                return b'{"recovered": true}'
+
+        with (
+            patch(
+                "urllib.request.urlopen",
+                side_effect=[http.client.RemoteDisconnected("closed"), Response()],
+            ) as opened,
+            patch("psycho_agent.providers.time.sleep"),
+        ):
+            result = UrllibJsonTransport().post(
+                "https://example.invalid",
+                headers={},
+                payload={},
+                timeout=1,
+            )
+        self.assertEqual(result, {"recovered": True})
+        self.assertEqual(opened.call_count, 2)
 
 
 if __name__ == "__main__":

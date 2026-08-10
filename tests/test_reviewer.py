@@ -94,6 +94,7 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(len(model.calls), 2)
         self.assertIn("连续两次", generated.text)
         self.assertEqual(self.session.recent_assistant_responses[-1], generated.text)
+        self.assertEqual(generated.final_review_issues, [])
 
     def test_approved_draft_and_semantic_review_use_two_calls(self) -> None:
         model = SequenceModel(

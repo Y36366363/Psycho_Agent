@@ -53,3 +53,17 @@ Safety tests must distinguish self from other, present from historical risk, cur
 **Status:** accepted
 
 Published counseling datasets can inform strategy taxonomy and future evaluation, but fine-tuning is deferred until licensing, provenance, privacy, and a provider-comparison baseline are established.
+
+## ADR-010: Blind provider comparisons before interpretation
+
+**Status:** accepted
+
+Every provider receives the same ordered synthetic multi-turn scenarios with semantic self-review disabled. Provider names are randomized into aliases and stored in a separate ignored key. Qualitative scores must be persisted before the key is opened. This reduces brand anchoring, but it does not remove reviewer subjectivity or establish clinical validity.
+
+Failed turns are treated separately from response quality. Transient network failures receive bounded retries; if a turn still fails, the complete scenario can be rerun while sealed so subsequent turns retain coherent context. Availability, latency, deterministic review flags, and qualitative language scores remain separate measurements.
+
+## ADR-011: Preserve verified TLS while supporting incomplete Python CA configuration
+
+**Status:** accepted
+
+Provider requests use Python's verified default SSL context. If the local Python installation exposes no default certificate authorities, the transport falls back to the operating system bundle at `/etc/ssl/cert.pem`. Certificate verification is never disabled. Transient transport errors and selected retryable HTTP statuses receive at most three attempts with short backoff; normal client errors are not retried.

@@ -1,0 +1,32 @@
+{
+  "Model-A": {
+    "turns": 17,
+    "successful_turns": 17,
+    "failed_turns": 0,
+    "draft_issue_count": 3,
+    "final_issue_count": 1,
+    "rewrite_count": 3,
+    "average_latency_seconds": 2.962,
+    "average_response_characters": 140
+  },
+  "Model-B": {
+    "turns": 17,
+    "successful_turns": 16,
+    "failed_turns": 1,
+    "draft_issue_count": 1,
+    "final_issue_count": 0,
+    "rewrite_count": 1,
+    "average_latency_seconds": 11.132,
+    "average_response_characters": 128
+  },
+  "Model-C": {
+    "turns": 17,
+    "successful_turns": 17,
+    "failed_turns": 0,
+    "draft_issue_count": 2,
+    "final_issue_count": 0,
+    "rewrite_count": 2,
+    "average_latency_seconds": 12.255,
+    "average_response_characters": 161
+  }
+}

@@ -26,6 +26,7 @@ class GeneratedResponse:
     draft: str
     rewritten: bool = False
     review_issues: list[ReviewIssue] = field(default_factory=list)
+    final_review_issues: list[ReviewIssue] = field(default_factory=list)
 
 
 class NaturalResponseGenerator:
@@ -72,12 +73,14 @@ class NaturalResponseGenerator:
                 ).strip()
                 rewritten = True
 
+        final_review = self.rule_reviewer.review(final, session, plan)
         self._remember(session, user_message, final)
         return GeneratedResponse(
             text=final,
             draft=draft,
             rewritten=rewritten,
             review_issues=issues,
+            final_review_issues=final_review.issues,
         )
 
     @staticmethod

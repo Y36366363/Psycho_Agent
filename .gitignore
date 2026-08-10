@@ -12,3 +12,4 @@ venv/
 .DS_Store
 dist/
 build/
+evaluations/results/**/provider_key.json

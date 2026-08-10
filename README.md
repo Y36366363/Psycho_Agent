@@ -1,3 +1,14 @@
+# Updates 8/10/2026
+
+- Verified live connectivity with configured OpenAI, DeepSeek, and Gemini credentials without printing or committing secrets; updated the Gemini default to `gemini-3.5-flash` after the former model rejected new-user requests.
+- Added a provider-blinded live comparison runner and ran all three providers over the same four synthetic, 17-turn scripts before revealing their identities.
+- Added sealed whole-scenario retries, bounded transient-network retries, verified system-CA fallback, safe error messages, and automatic latency/availability metrics.
+- Added a persisted pre-reveal qualitative rubric covering empathy, epistemic humility, strategy fit, alliance repair, autonomy boundaries, and naturalness.
+- Added post-rewrite review so corrected replies are inspected again, while preserving the one-rewrite API-cost bound.
+- Fixed `.env` parsing so the last duplicate assignment wins while real process environment values still take precedence; `.env` and the provider identity key remain ignored.
+- Expanded the suite to 48 passing unit tests while retaining 29/29 offline behavioral cases.
+- Published the [August 10 blinded comparison report](evaluations/results/2026-08-10/comparison_report.md), including limitations and concrete next-step recommendations.
+
 # Updates 8/9/2026
 
 - Added a research landscape comparing Woebot, Therabot, ESConv, PsyQA, SoulChat, CPsyCoun, recent safety findings, and Psycho Agent's current gaps.
@@ -79,6 +90,15 @@ After adding keys, run an opt-in live connectivity check. This makes one short, 
 python -m psycho_agent.smoke_test openai deepseek gemini
 ```
 
+Run the same synthetic multi-turn scenarios through all configured providers. Provider identities are randomized into aliases, with the key stored in an ignored file:
+
+```bash
+python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD
+python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD --retry-failures
+```
+
+The retry command reruns the complete scenario containing a failed turn so later responses retain valid conversational context. Do not open `provider_key.json` until qualitative scores have been written.
+
 Run tests:
 
 ```bash
@@ -107,6 +127,7 @@ src/psycho_agent/
   state_update.py explicit emotion, preference, impact, and rupture signals
   strategy.py     phase-aware support strategy selection
   evaluation.py   offline behavioral evaluation runner
+  live_compare.py provider-blinded live multi-turn comparison
 tests/            behavior-focused unit tests
 evaluations/      auditable JSONL behavior and scenario cases
 docs/             product and architecture decisions
@@ -118,10 +139,10 @@ This repository is research-stage software. It must not be presented as medical 
 
 ## Roadmap
 
-1. Add blinded live-provider comparison over shared multi-turn scenarios.
+1. Add repeatable human and clinician review with inter-rater agreement over a larger adversarial scenario set.
 2. Add a minimal web conversation interface.
 3. Add consent-aware long-term memory and privacy controls.
-4. Add provider fallback and cost/latency instrumentation without logging private content.
+4. Add provider fallback and cost instrumentation without logging private content.
 5. Conduct review with qualified mental-health professionals before any public-facing trial.
 
 ## Research review
