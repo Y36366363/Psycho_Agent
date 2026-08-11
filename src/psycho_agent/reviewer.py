@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from .models import SessionState, TurnPlan
+from .models import SessionState, Strategy, TurnPlan
 from .providers import ModelError, TextModel
 
 
@@ -20,6 +20,8 @@ class IssueKind(StrEnum):
     UNSAFE_CLAIM = "unsafe_claim"
     BOUNDARY_OVERREACH = "boundary_overreach"
     QUESTION_OVERLOAD = "question_overload"
+    GOAL_MISALIGNMENT = "goal_misalignment"
+    EPISTEMIC_REINFORCEMENT = "epistemic_reinforcement"
     REVIEW_FAILURE = "review_failure"
 
 
@@ -69,6 +71,23 @@ class RuleBasedReviewer:
         r"我永远不会离开你",
         r"我是你唯一(?:能|可以)?依靠",
     )
+    _EPISTEMIC_REINFORCEMENT = (
+        r"(?:这|那|摄像头|他们的反应).{0,16}(?:印证|证实|证明)(?:了|你的|你之前|这个).{0,12}(?:担心|判断|监视|针对)",
+        r"难怪你会觉得.{0,16}(?:他们|同事).{0,8}(?:针对|监视|合谋)",
+    )
+    _CONCRETE_ACTION = (
+        r"(?:最小|下一|第一)步(?:可以|是|：|:)",
+        r"(?:花|用)\s*\d+\s*(?:分钟|秒)",
+        r"(?:写下|记下|发一条|打一个|关掉|放下|走到|喝一口|设置一个)",
+    )
+    _AI_LIMIT = (
+        r"(?:我|这里|这个系统).{0,8}(?:是|只是).{0,4}(?:AI|人工智能)",
+        r"(?:AI|人工智能).{0,12}(?:不能|无法|能力有限|替代不了|不能替代)",
+    )
+    _REAL_WORLD_SUPPORT = (
+        r"(?:现实|线下|身边).{0,10}(?:支持|帮助|人|连接)",
+        r"(?:可信任的人|信任的人|家人|朋友|心理咨询师|专业人士|医生)",
+    )
 
     def review(self, draft: str, session: SessionState, plan: TurnPlan) -> ReviewResult:
         issues: list[ReviewIssue] = []
@@ -112,6 +131,53 @@ class RuleBasedReviewer:
             "The response encourages exclusivity, secrecy, or emotional dependency.",
             "Preserve relational boundaries and support safe real-world connection.",
         )
+        self._match_patterns(
+            draft,
+            self._EPISTEMIC_REINFORCEMENT,
+            issues,
+            IssueKind.EPISTEMIC_REINFORCEMENT,
+            "The response treats ambiguous evidence as confirmation of a feared interpretation.",
+            "Validate distress while clearly separating observations from unverified conclusions.",
+        )
+
+        if session.user.advice_paused and re.search(r"[？?]", draft):
+            issues.append(
+                ReviewIssue(
+                    IssueKind.GOAL_MISALIGNMENT,
+                    "The user said they had not finished, but the response asks another question.",
+                    "Reflect one specific meaning without questions, techniques, or advice.",
+                )
+            )
+
+        if plan.strategy is Strategy.TINY_NEXT_STEP and not any(
+            re.search(pattern, draft, re.IGNORECASE) for pattern in self._CONCRETE_ACTION
+        ):
+            issues.append(
+                ReviewIssue(
+                    IssueKind.GOAL_MISALIGNMENT,
+                    "The user requested a small next step, but no concrete action was supplied.",
+                    "Give one low-effort action directly instead of continuing assessment.",
+                )
+            )
+
+        if session.user.exclusive_ai_reliance:
+            has_limit = any(
+                re.search(pattern, draft, re.IGNORECASE) for pattern in self._AI_LIMIT
+            )
+            has_bridge = any(
+                re.search(pattern, draft, re.IGNORECASE)
+                for pattern in self._REAL_WORLD_SUPPORT
+            )
+            if not (has_limit and has_bridge):
+                issues.append(
+                    ReviewIssue(
+                        IssueKind.BOUNDARY_OVERREACH,
+                        "Exclusive AI reliance was expressed without both an AI limit "
+                        "and an offline bridge.",
+                        "Name the AI's limits and offer one non-coercive route to "
+                        "real-world support.",
+                    )
+                )
 
         if len(re.findall(r"[？?]", draft)) >= 3:
             issues.append(
@@ -137,7 +203,8 @@ class RuleBasedReviewer:
                     ReviewIssue(
                         IssueKind.REPETITION,
                         "The draft substantially repeats a recent assistant response.",
-                        "Use a different conversational action and add information not already stated.",
+                        "Use a different conversational action and add information not "
+                        "already stated.",
                     )
                 )
                 break
@@ -176,7 +243,8 @@ mechanical stock phrasing, repetition, premature diagnosis, too much advice, fal
 and failure to follow the turn plan. Return JSON only, with this exact shape:
 {"approved": true, "issues": [{"kind": "mechanical", "explanation": "...", "revision": "..."}]}
 Allowed kinds: sycophancy, mechanical, repetition, premature_diagnosis, advice_overload,
-unsafe_claim, boundary_overreach, question_overload. Do not include markdown."""
+unsafe_claim, boundary_overreach, question_overload, goal_misalignment,
+epistemic_reinforcement. Do not include markdown."""
 
     def __init__(self, model: TextModel) -> None:
         self.model = model

@@ -1,3 +1,14 @@
+# Updates 8/12/2026
+
+- Added user-controlled pacing signals so “I have not finished” interrupts intake, suppresses questions/advice, and remains active until the user explicitly resumes problem solving.
+- Added direct tiny-step routing that supplies one concrete low-effort action instead of continuing assessment, even when distress intensity would otherwise trigger generic grounding.
+- Added a real-world-bridge strategy for exclusive AI reliance, requiring transparent AI limits and one non-coercive route to a trusted person or qualified professional.
+- Added goal-misalignment and epistemic-reinforcement review, plus a deterministic no-extra-call safety fallback when one bounded rewrite still leaves dependency or unsupported-certainty risk.
+- Added a versioned Exploration–Insight–Action qualitative rubric with behavioral anchors, informed by ESC-Judge while retaining separate alliance, safety, autonomy, and naturalness dimensions.
+- Ran OpenAI, DeepSeek, and Gemini through the same anonymous seven-turn regression set: all completed 7/7 turns and all respected the listen-then-act boundary; findings are documented in the [August 12 regression report](evaluations/results/2026-08-12/regression_report.md).
+- Expanded the suite to 62 passing unit tests and 41/41 offline behavioral cases.
+- Added a [2026 competitive review](docs/competitive-review-2026-08-12.md) covering PsychAgent, ESC-Judge, ESC-Eval, clinician-rated artificial-user evaluation, cognitive-restructuring agents, Therabot, and WHO governance guidance.
+
 # Updates 8/10/2026
 
 - Verified live connectivity with configured OpenAI, DeepSeek, and Gemini credentials without printing or committing secrets; updated the Gemini default to `gemini-3.5-flash` after the former model rejected new-user requests.
@@ -28,7 +39,7 @@
 
 Psycho Agent is an experimental, human-centered psychological support agent. Its goal is not to imitate a therapist's identity or simply sound agreeable. It tries to follow a disciplined support process: understand the person's current state, decide what kind of help is appropriate, respond naturally, track progress, and avoid repeating generic advice.
 
-The current release plans each conversation turn, generates a provider-backed natural reply, reviews the draft, and performs at most one corrective rewrite. A minimal user interface will come in a later milestone.
+The current release plans each conversation turn, generates a provider-backed natural reply, reviews the draft, and performs at most one corrective rewrite. Two high-impact residual failures—AI-dependency encouragement and reinforcement of unsupported certainty—fall back to a deterministic safe response without another model call. A minimal user interface will come in a later milestone.
 
 ## Product principles
 
@@ -111,7 +122,7 @@ Run the research-informed offline behavior suite:
 python -m psycho_agent.evaluation
 ```
 
-The behavioral suite is stored in `evaluations/behavior_cases.jsonl`. It checks safety contrast sets, explicit state extraction, reviewer failures, and multi-turn routing. These cases are engineering invariants, not a clinical validation score.
+The behavioral suite is stored in `evaluations/behavior_cases.jsonl`. It checks safety contrast sets, explicit state extraction, user-controlled pacing, goal alignment, reviewer failures, and multi-turn routing. The stage-aware qualitative rubric is stored in `evaluations/qualitative_rubric.json`. These artifacts are engineering invariants, not a clinical validation score.
 
 ## Repository layout
 
@@ -139,7 +150,7 @@ This repository is research-stage software. It must not be presented as medical 
 
 ## Roadmap
 
-1. Add repeatable human and clinician review with inter-rater agreement over a larger adversarial scenario set.
+1. Add repeatable human and clinician review with inter-rater agreement over a larger, profile-varied adversarial scenario set.
 2. Add a minimal web conversation interface.
 3. Add consent-aware long-term memory and privacy controls.
 4. Add provider fallback and cost instrumentation without logging private content.
@@ -147,4 +158,4 @@ This repository is research-stage software. It must not be presented as medical 
 
 ## Research review
 
-The [research landscape](docs/research-landscape.md) explains what this project borrows from published systems, where it deliberately differs from “AI therapist” claims, and why alliance, strategy fit, epistemic humility, multi-turn progress, and expert oversight must be evaluated separately.
+The [research landscape](docs/research-landscape.md) explains the evidence baseline. The [August 2026 competitive review](docs/competitive-review-2026-08-12.md) compares newer project architectures and records what Psycho Agent should adopt, defer, or reject.

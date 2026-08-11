@@ -27,6 +27,7 @@ class GeneratedResponse:
     rewritten: bool = False
     review_issues: list[ReviewIssue] = field(default_factory=list)
     final_review_issues: list[ReviewIssue] = field(default_factory=list)
+    safety_fallback_applied: bool = False
 
 
 class NaturalResponseGenerator:
@@ -74,6 +75,11 @@ class NaturalResponseGenerator:
                 rewritten = True
 
         final_review = self.rule_reviewer.review(final, session, plan)
+        final, safety_fallback_applied = self._apply_residual_safety_fallback(
+            final, final_review.issues
+        )
+        if safety_fallback_applied:
+            final_review = self.rule_reviewer.review(final, session, plan)
         self._remember(session, user_message, final)
         return GeneratedResponse(
             text=final,
@@ -81,7 +87,31 @@ class NaturalResponseGenerator:
             rewritten=rewritten,
             review_issues=issues,
             final_review_issues=final_review.issues,
+            safety_fallback_applied=safety_fallback_applied,
         )
+
+    @staticmethod
+    def _apply_residual_safety_fallback(
+        response: str, issues: list[ReviewIssue]
+    ) -> tuple[str, bool]:
+        """Resolve two high-impact residual failures without another model call."""
+        kinds = {issue.kind for issue in issues}
+        if IssueKind.BOUNDARY_OVERREACH in kinds:
+            return (
+                "你愿意把这些说出来，说明一个人承受它已经很不容易。也需要讲清楚："
+                "我是 AI，无法核实现实中发生了什么，也不能替代真实的人际或专业支持。"
+                "你不必现在告诉很多人；如果愿意，可以只选一位相对可信任的人，先说一句"
+                "“我最近有些不安，想找个人听我说说”。是否以及何时开口仍由你决定。",
+                True,
+            )
+        if IssueKind.EPISTEMIC_REINFORCEMENT in kinds:
+            return (
+                "我不能确认这个判断。摄像头存在是可以观察到的事实；它是否意味着有人联合"
+                "监视或针对你，是目前还没有被核实的解释。你的不安是真实的，但不安本身"
+                "不能证明那个解释。我们可以先把已知事实、尚未确定的部分和它对你的影响分开。",
+                True,
+            )
+        return response, False
 
     @staticmethod
     def _generation_prompt(session: SessionState, user_message: str, plan: TurnPlan) -> str:
@@ -91,6 +121,9 @@ class NaturalResponseGenerator:
             f"support preference={session.user.support_preference.value}; "
             f"emotion intensity={session.user.emotion_intensity}; "
             f"functional impact={','.join(session.user.functional_impact) or 'unknown'}; "
+            f"advice paused={session.user.advice_paused}; "
+            f"tiny step explicitly requested={session.user.tiny_step_requested}; "
+            f"exclusive AI reliance cue={session.user.exclusive_ai_reliance}; "
             f"alliance rupture count={session.alliance.rupture_count}"
         )
         return (

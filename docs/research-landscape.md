@@ -118,6 +118,10 @@ No single “empathy score” is sufficient. We should maintain four layers:
 - Do not optimize for maximum emotional attachment. Reject exclusivity, secrecy, false intimacy, and dependency cues.
 - Describe the system as AI psychological support for everyday distress, not an autonomous therapist.
 
+## August 2026 follow-up
+
+The [competitive review dated 2026-08-12](competitive-review-2026-08-12.md) extends this baseline with PsychAgent's multi-session skill architecture, ESC-Judge's stage-aware pairwise evaluation, ESC-Eval's role diversity, and recent clinician-rated evaluation methods. Its adopt/defer/reject table is the current source for roadmap prioritization.
+
 ## Limitations of this review
 
 Published systems differ in population, duration, clinical involvement, and outcome definitions. Product pages and repository popularity do not establish efficacy. Dataset benchmarks may reward resemblance to counseling text without measuring harm, truthfulness, alliance repair, or real-world outcomes. Every borrowed method must therefore be converted into an explicit hypothesis and evaluated within this project's intended scope.

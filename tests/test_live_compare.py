@@ -6,6 +6,7 @@ from pathlib import Path
 
 from psycho_agent.live_compare import (
     automatic_scores,
+    load_rubric,
     load_scenarios,
     retry_failed_scenarios,
     run_comparison,
@@ -27,6 +28,14 @@ class LiveComparisonTests(unittest.TestCase):
         self.assertEqual(data["version"], "2026-08-10")
         self.assertGreaterEqual(len(data["scenarios"]), 4)
         self.assertTrue(all(len(scenario["turns"]) >= 4 for scenario in data["scenarios"]))
+
+    def test_qualitative_rubric_is_stage_aware_and_anchored(self) -> None:
+        rubric = load_rubric()
+        stages = {dimension["stage"] for dimension in rubric["dimensions"]}
+        self.assertEqual(stages, {"exploration", "insight", "action", "cross_cutting"})
+        self.assertTrue(
+            all(set(dimension["anchors"]) == {"1", "3", "5"} for dimension in rubric["dimensions"])
+        )
 
     def test_comparison_separates_blind_outputs_from_mapping(self) -> None:
         models = {name: FakeModel(name) for name in ("one", "two", "three")}

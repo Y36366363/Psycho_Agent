@@ -13,7 +13,12 @@ _GOALS = {
     Strategy.PROBLEM_SOLVE: "Compare realistic options and their trade-offs collaboratively.",
     Strategy.TINY_NEXT_STEP: "Choose one small action that remains possible under current strain.",
     Strategy.REVIEW_PROGRESS: "Identify what changed, what did not, and what needs a new approach.",
-    Strategy.REPAIR_ALLIANCE: "Acknowledge a conversational miss and renegotiate what would help now.",
+    Strategy.REPAIR_ALLIANCE: (
+        "Acknowledge a conversational miss and renegotiate what would help now."
+    ),
+    Strategy.REAL_WORLD_BRIDGE: (
+        "Preserve AI boundaries and make one non-coercive bridge to safe real-world support."
+    ),
 }
 
 
@@ -24,6 +29,12 @@ def _candidate_strategies(session: SessionState) -> list[Strategy]:
         and session.turn_count - session.alliance.last_rupture_turn <= 1
     ):
         return [Strategy.REPAIR_ALLIANCE]
+    if session.user.exclusive_ai_reliance:
+        return [Strategy.REAL_WORLD_BRIDGE]
+    if session.user.tiny_step_requested:
+        return [Strategy.TINY_NEXT_STEP]
+    if session.user.advice_paused:
+        return [Strategy.REFLECT]
     if (session.user.emotion_intensity or 0) >= 8:
         return [Strategy.GROUND, Strategy.REFLECT]
     if session.user.support_preference is SupportPreference.LISTEN:
@@ -60,7 +71,14 @@ def build_support_plan(session: SessionState) -> TurnPlan:
     elif strategy is Strategy.GENTLE_CHALLENGE:
         questions = ["有没有哪怕一个细节，可能不完全符合你现在最担心的那个结论？"]
     elif strategy is Strategy.TINY_NEXT_STEP:
-        questions = ["在不要求自己立刻好起来的前提下，今天最小但有用的一步会是什么？"]
+        instructions.extend(
+            [
+                "Give exactly one concrete low-effort action that can be started today.",
+                "State the action directly; do not replace it with another assessment question.",
+                "Briefly explain why it fits the details already shared, then ask for "
+                "consent at most once.",
+            ]
+        )
     elif strategy is Strategy.REPAIR_ALLIANCE:
         questions = ["刚才我偏离了你的需要：你更希望我停下建议认真听，还是换一个角度一起分析？"]
         instructions.extend(
@@ -68,6 +86,27 @@ def build_support_plan(session: SessionState) -> TurnPlan:
                 "Name the specific conversational miss without defending the system.",
                 "Do not demand that the user reassure or forgive the assistant.",
                 "Let the user renegotiate the goal or task for the next turn.",
+            ]
+        )
+    elif strategy is Strategy.REAL_WORLD_BRIDGE:
+        instructions.extend(
+            [
+                "State plainly that an AI cannot verify the situation or replace human support.",
+                "Do not shame, pressure, or abruptly send the user away.",
+                "Offer one low-pressure way to involve a trusted person or qualified "
+                "professional.",
+                "Do not describe this chat as private, confidential, uniquely safe, or "
+                "always available.",
+            ]
+        )
+
+    if session.user.advice_paused:
+        questions = []
+        instructions.extend(
+            [
+                "The user explicitly has not finished speaking: offer no technique or advice.",
+                "Do not ask an assessment question; reflect one specific meaning and "
+                "leave room to continue.",
             ]
         )
 

@@ -21,6 +21,7 @@ from .providers import ModelError, TextModel, create_model
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SCENARIOS = ROOT / "evaluations" / "live_scenarios.json"
+DEFAULT_RUBRIC = ROOT / "evaluations" / "qualitative_rubric.json"
 
 
 @dataclass(slots=True)
@@ -34,6 +35,7 @@ class TurnRecord:
     rewritten: bool
     draft_issues: list[str]
     final_issues: list[str]
+    safety_fallback_applied: bool
     latency_seconds: float
     error: str | None = None
 
@@ -45,6 +47,26 @@ def load_scenarios(path: str | Path = DEFAULT_SCENARIOS) -> dict[str, Any]:
     for scenario in data["scenarios"]:
         if not scenario.get("id") or not scenario.get("turns"):
             raise ValueError("Every live scenario needs an id and at least one turn.")
+    return data
+
+
+def load_rubric(path: str | Path = DEFAULT_RUBRIC) -> dict[str, Any]:
+    """Load the versioned, stage-aware qualitative comparison rubric."""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    dimensions = data.get("dimensions")
+    if not data.get("version") or not isinstance(dimensions, list) or not dimensions:
+        raise ValueError("Qualitative rubric needs a version and non-empty dimensions.")
+    for dimension in dimensions:
+        if not dimension.get("id") or dimension.get("stage") not in {
+            "exploration",
+            "insight",
+            "action",
+            "cross_cutting",
+        }:
+            raise ValueError("Every rubric dimension needs an id and supported stage.")
+        anchors = dimension.get("anchors", {})
+        if not all(str(score) in anchors for score in (1, 3, 5)):
+            raise ValueError("Every rubric dimension needs behavioral anchors for 1, 3, and 5.")
     return data
 
 
@@ -82,6 +104,7 @@ def _run_scenario(alias: str, model: TextModel, scenario: dict[str, Any]) -> dic
                 rewritten=generated.rewritten,
                 draft_issues=[issue.kind.value for issue in generated.review_issues],
                 final_issues=[issue.kind.value for issue in generated.final_review_issues],
+                safety_fallback_applied=generated.safety_fallback_applied,
                 latency_seconds=round(elapsed, 3),
             )
         except ModelError as exc:
@@ -96,6 +119,7 @@ def _run_scenario(alias: str, model: TextModel, scenario: dict[str, Any]) -> dic
                 rewritten=False,
                 draft_issues=[],
                 final_issues=[],
+                safety_fallback_applied=False,
                 latency_seconds=round(elapsed, 3),
                 error=str(exc),
             )
@@ -135,6 +159,7 @@ def run_comparison(
     blind_data = {
         "run_at": datetime.now(UTC).isoformat(),
         "scenario_version": scenario_data.get("version"),
+        "rubric_version": load_rubric().get("version"),
         "review_mode": (
             "deterministic rules with at most one rewrite; semantic model review disabled"
         ),
@@ -152,7 +177,9 @@ def run_comparison(
     }
     blind_path = destination / "blind_outputs.json"
     key_path = destination / "provider_key.json"
-    blind_path.write_text(json.dumps(blind_data, ensure_ascii=False, indent=2), encoding="utf-8")
+    blind_path.write_text(
+        json.dumps(blind_data, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     key_path.write_text(json.dumps(key_data, ensure_ascii=False, indent=2), encoding="utf-8")
     return blind_path, key_path
 
@@ -184,7 +211,9 @@ def retry_failed_scenarios(
             raise ValueError(f"No configured model for the sealed provider behind {alias}.")
         retried[alias] = failed_ids
         replacements = {
-            scenario_id: _run_scenario(alias, models[provider_name], scenarios_by_id[scenario_id])
+            scenario_id: _run_scenario(
+                alias, models[provider_name], scenarios_by_id[scenario_id]
+            )
             for scenario_id in failed_ids
         }
         model_data["scenarios"] = [
@@ -223,6 +252,9 @@ def automatic_scores(blind_path: str | Path) -> dict[str, dict[str, float | int]
             "draft_issue_count": sum(len(turn["draft_issues"]) for turn in turns),
             "final_issue_count": sum(len(turn["final_issues"]) for turn in turns),
             "rewrite_count": sum(bool(turn["rewritten"]) for turn in turns),
+            "safety_fallback_count": sum(
+                bool(turn.get("safety_fallback_applied")) for turn in turns
+            ),
             "average_latency_seconds": round(
                 sum(turn["latency_seconds"] for turn in turns) / len(turns), 3
             ),

@@ -79,6 +79,12 @@ class ConversationEngine:
             session.intake_step += 1
             if intake_complete(session):
                 session.phase = ConversationPhase.EXPLORE
+            if (
+                session.user.advice_paused
+                or session.user.tiny_step_requested
+                or session.user.exclusive_ai_reliance
+                or intake_complete(session)
+            ):
                 plan = build_support_plan(session)
             else:
                 plan = build_intake_plan(session)

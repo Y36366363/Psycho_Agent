@@ -41,12 +41,39 @@ _RUPTURE_PATTERNS = (
     r"这(?:回答|说法).{0,6}(?:没用|很机械|像模板)",
 )
 
+_PAUSE_ADVICE_PATTERNS = (
+    r"(?:先|现在|这会儿).{0,5}(?:别|不要|不想).{0,5}(?:方法|办法|建议|分析)",
+    r"我还没(?:有)?说完",
+    r"(?:先|只想).{0,5}(?:听我说|倾诉)",
+)
+
+_RESUME_ADVICE_PATTERNS = (
+    r"我说完了",
+    r"现在可以.{0,6}(?:方法|办法|建议|下一步)",
+    r"可以开始.{0,6}(?:分析|想办法|给建议)",
+)
+
+_TINY_STEP_PATTERNS = (
+    r"(?:最小|很小|最简单).{0,5}(?:一步|下一步|行动)",
+    r"今天能做的.{0,6}(?:一步|事情|行动)",
+)
+
+_EXCLUSIVE_AI_PATTERNS = (
+    r"只有你.{0,8}(?:愿意听|懂我|能理解|可以说)",
+    r"(?:不打算|不会|不想).{0,8}(?:告诉|联系|找).{0,6}(?:现实|身边|其他人|任何人)",
+    r"现实里.{0,6}(?:没人|没有人).{0,6}(?:能听|理解|可信)",
+)
+
 
 def update_session_state(session: SessionState, message: str) -> None:
     """Extract only explicit, auditable signals; never infer a diagnosis."""
     text = " ".join(message.strip().split())
     if not text:
         return
+
+    # These two signals describe the current turn rather than a durable preference.
+    session.user.tiny_step_requested = False
+    session.user.exclusive_ai_reliance = False
 
     intensity_matches = re.findall(r"(?<!\d)(10|[0-9])\s*(?:分|/\s*10)(?!\d)", text)
     if intensity_matches:
@@ -60,12 +87,25 @@ def update_session_state(session: SessionState, message: str) -> None:
         if any(marker in text for marker in markers) and area not in session.user.functional_impact:
             session.user.functional_impact.append(area)
 
-    if re.search(r"(?:先|只想).{0,5}(?:听我说|倾诉)|不(?:想|需要).{0,4}建议", text):
+    if any(re.search(pattern, text) for pattern in _PAUSE_ADVICE_PATTERNS):
         session.user.support_preference = SupportPreference.LISTEN
+        session.user.advice_paused = True
     elif re.search(r"(?:帮我|一起).{0,5}(?:理清|看清|分析)|为什么会这样", text):
         session.user.support_preference = SupportPreference.UNDERSTAND
     elif re.search(r"(?:想|需要|帮我).{0,5}(?:办法|方案|建议|下一步)|我该怎么做", text):
         session.user.support_preference = SupportPreference.PLAN
+
+    if any(re.search(pattern, text) for pattern in _RESUME_ADVICE_PATTERNS):
+        session.user.advice_paused = False
+        session.user.support_preference = SupportPreference.PLAN
+
+    if any(re.search(pattern, text) for pattern in _TINY_STEP_PATTERNS):
+        session.user.tiny_step_requested = True
+        session.user.advice_paused = False
+        session.user.support_preference = SupportPreference.PLAN
+
+    if any(re.search(pattern, text) for pattern in _EXCLUSIVE_AI_PATTERNS):
+        session.user.exclusive_ai_reliance = True
 
     if session.user.support_preference is not SupportPreference.UNKNOWN:
         session.alliance.goal_aligned = True

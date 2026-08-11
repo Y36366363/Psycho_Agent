@@ -47,6 +47,7 @@ class Strategy(StrEnum):
     TINY_NEXT_STEP = "tiny_next_step"
     REVIEW_PROGRESS = "review_progress"
     REPAIR_ALLIANCE = "repair_alliance"
+    REAL_WORLD_BRIDGE = "real_world_bridge"
     SAFETY_FOLLOW_UP = "safety_follow_up"
     CRISIS_SUPPORT = "crisis_support"
 
@@ -70,6 +71,9 @@ class UserState:
     support_preference: SupportPreference = SupportPreference.UNKNOWN
     attempted_actions: list[str] = field(default_factory=list)
     working_hypotheses: list[str] = field(default_factory=list)
+    advice_paused: bool = False
+    tiny_step_requested: bool = False
+    exclusive_ai_reliance: bool = False
 
 
 @dataclass(slots=True)

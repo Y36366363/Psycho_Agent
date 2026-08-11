@@ -38,6 +38,12 @@ class ConversationEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.engine.process(self.session, "  ")
 
+    def test_user_can_interrupt_intake_to_finish_speaking(self) -> None:
+        self.engine.process(self.session, "项目连续出错，我很焦虑")
+        plan = self.engine.process(self.session, "先别给我方法，我还没说完")
+        self.assertEqual(plan.strategy, Strategy.REFLECT)
+        self.assertEqual(plan.questions, [])
+
 
 class StrategyTests(unittest.TestCase):
     def test_high_intensity_prefers_grounding(self) -> None:
@@ -50,6 +56,17 @@ class StrategyTests(unittest.TestCase):
         session.user.support_preference = SupportPreference.PLAN
         session.used_strategies = [Strategy.TINY_NEXT_STEP]
         self.assertEqual(select_strategy(session), Strategy.PROBLEM_SOLVE)
+
+    def test_explicit_tiny_step_beats_high_intensity_grounding(self) -> None:
+        session = SessionState(session_id="tiny")
+        session.user.emotion_intensity = 9
+        session.user.tiny_step_requested = True
+        self.assertEqual(select_strategy(session), Strategy.TINY_NEXT_STEP)
+
+    def test_exclusive_ai_reliance_routes_to_real_world_bridge(self) -> None:
+        session = SessionState(session_id="bridge")
+        session.user.exclusive_ai_reliance = True
+        self.assertEqual(select_strategy(session), Strategy.REAL_WORLD_BRIDGE)
 
 
 if __name__ == "__main__":

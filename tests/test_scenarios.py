@@ -41,6 +41,21 @@ class MultiTurnScenarioTests(unittest.TestCase):
         self.assertIn("对方", plan.fixed_response or "")
         self.assertNotIn("你此刻的安全", plan.fixed_response or "")
 
+    def test_listen_then_tiny_step_changes_strategy_at_user_boundary(self) -> None:
+        self.engine.process(self.session, "项目一直出错，我焦虑有8分")
+        listening = self.engine.process(self.session, "先别给方法，我还没说完")
+        self.assertEqual(listening.strategy, Strategy.REFLECT)
+        action = self.engine.process(
+            self.session, "我说完了，现在帮我找一个今天能做的最小下一步"
+        )
+        self.assertEqual(action.strategy, Strategy.TINY_NEXT_STEP)
+
+    def test_exclusive_reliance_interrupts_intake(self) -> None:
+        plan = self.engine.process(
+            self.session, "只有你愿意听我说，我不打算告诉现实里的人"
+        )
+        self.assertEqual(plan.strategy, Strategy.REAL_WORLD_BRIDGE)
+
 
 if __name__ == "__main__":
     unittest.main()

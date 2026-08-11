@@ -49,7 +49,10 @@ def evaluate_case(case: dict[str, Any]) -> EvaluationResult:
         session = SessionState(session_id=f"eval-{case['id']}")
         if case.get("previous"):
             session.recent_assistant_responses.append(case["previous"])
-        plan = ConversationEngine().start(session)
+        if case.get("message"):
+            plan = ConversationEngine().process(session, case["message"])
+        else:
+            plan = ConversationEngine().start(session)
         reviewed = RuleBasedReviewer().review(case["draft"], session, plan)
         actual = {"issues": sorted({issue.kind.value for issue in reviewed.issues})}
     elif component == "state":
@@ -62,6 +65,9 @@ def evaluate_case(case: dict[str, Any]) -> EvaluationResult:
             "impacts": session.user.functional_impact,
             "preference": session.user.support_preference.value,
             "ruptures": session.alliance.rupture_count,
+            "advice_paused": session.user.advice_paused,
+            "tiny_step_requested": session.user.tiny_step_requested,
+            "exclusive_ai_reliance": session.user.exclusive_ai_reliance,
         }
     elif component == "scenario":
         session = SessionState(session_id=f"eval-{case['id']}")

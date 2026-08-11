@@ -67,3 +67,21 @@ Failed turns are treated separately from response quality. Transient network fai
 **Status:** accepted
 
 Provider requests use Python's verified default SSL context. If the local Python installation exposes no default certificate authorities, the transport falls back to the operating system bundle at `/etc/ssl/cert.pem`. Certificate verification is never disabled. Transient transport errors and selected retryable HTTP statuses receive at most three attempts with short backoff; normal client errors are not retried.
+
+## ADR-012: User pacing interrupts intake
+
+**Status:** accepted
+
+An intake sequence is subordinate to an explicit conversational boundary. “I have not finished” creates a durable advice pause: normal assessment questions and techniques stop until the user explicitly asks to analyze, plan, or take a next step. A request for one smallest next step routes directly to a concrete action, even when high reported distress would otherwise select grounding. These signals are auditable state, not prompt-only suggestions.
+
+## ADR-013: Bound model correction and deterministically close residual high-impact failures
+
+**Status:** accepted
+
+Normal drafts still receive at most one model rewrite. If the rewritten response continues to encourage exclusive AI reliance or reinforce an unsupported high-certainty interpretation, a deterministic response replaces it without another provider call. This trades some stylistic variety for a stable boundary on high-impact failures while avoiding an unbounded self-correction loop. The final replacement is reviewed again and recorded in evaluation metadata.
+
+## ADR-014: Evaluate stages and cross-cutting safeguards separately
+
+**Status:** accepted
+
+Qualitative comparison uses versioned behavioral anchors divided into exploration, insight, action, and cross-cutting dimensions. This borrows the interpretable stage structure of ESC-Judge but does not collapse alliance repair, safety boundaries, autonomy, or naturalness into a therapy-effectiveness claim. Automated judges may assist scaling later, but blinded human and clinician ratings remain necessary for consequential evaluation.

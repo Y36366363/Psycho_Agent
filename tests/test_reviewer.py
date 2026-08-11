@@ -2,7 +2,7 @@ import unittest
 
 from psycho_agent.engine import ConversationEngine
 from psycho_agent.generator import NaturalResponseGenerator
-from psycho_agent.models import SessionState
+from psycho_agent.models import SessionState, Strategy
 from psycho_agent.reviewer import IssueKind, ModelReviewer, RuleBasedReviewer
 
 
@@ -72,6 +72,60 @@ class ReviewerTests(unittest.TestCase):
         )
         self.assertIn(IssueKind.QUESTION_OVERLOAD, {issue.kind for issue in result.issues})
 
+    def test_detects_question_when_user_has_not_finished(self) -> None:
+        self.session.user.advice_paused = True
+        result = self.reviewer.review(
+            "我先不提供方法。现在对睡眠影响最大的是哪部分？",
+            self.session,
+            self.plan,
+        )
+        self.assertIn(IssueKind.GOAL_MISALIGNMENT, {issue.kind for issue in result.issues})
+
+    def test_tiny_step_requires_a_concrete_action(self) -> None:
+        self.plan.strategy = Strategy.TINY_NEXT_STEP
+        result = self.reviewer.review(
+            "先不急着解决全部问题。此刻身体上最明显的感觉是什么？",
+            self.session,
+            self.plan,
+        )
+        self.assertIn(IssueKind.GOAL_MISALIGNMENT, {issue.kind for issue in result.issues})
+        approved = self.reviewer.review(
+            "今天最小的一步是：花3分钟写下已经发生的事实，不分析原因。",
+            self.session,
+            self.plan,
+        )
+        self.assertNotIn(
+            IssueKind.GOAL_MISALIGNMENT, {issue.kind for issue in approved.issues}
+        )
+
+    def test_exclusive_reliance_requires_ai_limit_and_real_world_bridge(self) -> None:
+        self.session.user.exclusive_ai_reliance = True
+        missing = self.reviewer.review(
+            "我尊重你不想告诉任何人的决定，我会一直在这里听。",
+            self.session,
+            self.plan,
+        )
+        self.assertIn(IssueKind.BOUNDARY_OVERREACH, {issue.kind for issue in missing.issues})
+        complete = self.reviewer.review(
+            "我是AI，无法替代现实支持；如果你愿意，可以先选一位可信任的人，只说你最近压力很大。",
+            self.session,
+            self.plan,
+        )
+        self.assertNotIn(
+            IssueKind.BOUNDARY_OVERREACH, {issue.kind for issue in complete.issues}
+        )
+
+    def test_detects_subtle_reinforcement_of_unverified_belief(self) -> None:
+        result = self.reviewer.review(
+            "办公室装了摄像头，难怪你会觉得同事们在联合监视和针对你。",
+            self.session,
+            self.plan,
+        )
+        self.assertIn(
+            IssueKind.EPISTEMIC_REINFORCEMENT,
+            {issue.kind for issue in result.issues},
+        )
+
 
 class GeneratorTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -121,6 +175,45 @@ class GeneratorTests(unittest.TestCase):
         )
         self.assertEqual(len(model.calls), 0)
         self.assertIn("立即联系", generated.text)
+
+    def test_residual_dependency_failure_uses_bounded_safe_fallback(self) -> None:
+        model = SequenceModel(
+            [
+                "我会一直在这里，你不需要告诉别人。",
+                "我尊重你只想在这里说，我会继续陪着你。",
+            ]
+        )
+        self.session.user.exclusive_ai_reliance = True
+        plan = ConversationEngine().process(
+            self.session, "只有你愿意听我说，我不打算告诉现实里的人"
+        )
+        generated = NaturalResponseGenerator(model, enable_model_review=False).generate(
+            session=self.session,
+            user_message="只有你愿意听我说，我不打算告诉现实里的人",
+            plan=plan,
+        )
+        self.assertEqual(len(model.calls), 2)
+        self.assertTrue(generated.safety_fallback_applied)
+        self.assertIn("我是 AI", generated.text)
+        self.assertIn("可信任的人", generated.text)
+        self.assertEqual(generated.final_review_issues, [])
+
+    def test_residual_epistemic_reinforcement_uses_safe_fallback(self) -> None:
+        model = SequenceModel(
+            [
+                "摄像头证实了你的监视判断。",
+                "这个摄像头证明了你的担心，他们就是在针对你。",
+            ]
+        )
+        generated = NaturalResponseGenerator(model, enable_model_review=False).generate(
+            session=self.session,
+            user_message="摄像头证明他们在监视我",
+            plan=self.plan,
+        )
+        self.assertEqual(len(model.calls), 2)
+        self.assertTrue(generated.safety_fallback_applied)
+        self.assertIn("我不能确认", generated.text)
+        self.assertEqual(generated.final_review_issues, [])
 
 
 if __name__ == "__main__":
