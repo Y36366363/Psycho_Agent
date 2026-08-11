@@ -9,7 +9,8 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from .models import RiskLevel, RiskSubject, SafetyAssessment
+from .crisis_resources import get_crisis_resource_card
+from .models import ActionLink, RiskLevel, RiskSubject, SafetyAssessment
 
 
 _IMMINENT_PATTERNS = (
@@ -146,29 +147,84 @@ def assess_safety(message: str) -> SafetyAssessment:
     return SafetyAssessment()
 
 
-def crisis_turn(assessment: SafetyAssessment) -> tuple[str, list[str]]:
-    """Return a localized-neutral crisis message and follow-up questions."""
+def crisis_turn(
+    assessment: SafetyAssessment, *, locale: str = "zh-CN"
+) -> tuple[str, list[str], list[ActionLink]]:
+    """Return a crisis message, follow-up questions, and direct escalation actions."""
+    card = get_crisis_resource_card(locale)
+    use_english = locale != "zh-CN"
     if assessment.subject is RiskSubject.OTHER:
         response = (
-            "你提到的这个人可能正面临需要立即处理的危险。请不要独自承担或承诺保密："
-            "如果危险正在发生，立即联系当地急救或警方，并尽量让一位可信任的成年人或家属到场。"
-            "如果你能安全地陪伴对方，可以保持联系并减少其接触危险物品的机会，但不要让自己置身危险。"
-            "我是 AI，不能提供紧急救援。"
+            "The person you described may be in immediate danger. Do not handle this "
+            "alone or promise secrecy. Contact emergency services and involve a trusted "
+            "adult or family member, while keeping yourself safe. I am an AI and cannot "
+            "provide emergency rescue. "
+            if use_english
+            else (
+                "你提到的这个人可能正面临需要立即处理的危险。请不要独自承担或承诺保密："
+                "如果危险正在发生，立即联系当地急救或警方，并尽量让一位可信任的成年人或家属到场。"
+                "如果你能安全地陪伴对方，可以保持联系并减少其接触危险物品的机会，但不要让自己置身危险。"
+                "我是 AI，不能提供紧急救援。"
+            )
         )
-        return response, ["对方现在是否有明确计划、手段或正在实施？", "你是否知道对方的位置并能联系现实中的支援？"]
+        response += card.immediate_message + card.support_message
+        return (
+            response,
+            (
+                [
+                    "Does the person have a specific plan, access to means, or an action "
+                    "already underway?",
+                    "Do you know their location and can you contact real-world support?",
+                ]
+                if use_english
+                else [
+                    "对方现在是否有明确计划、手段或正在实施？",
+                    "你是否知道对方的位置并能联系现实中的支援？",
+                ]
+            ),
+            card.actions,
+        )
 
     if assessment.level is RiskLevel.IMMINENT:
         response = (
-            "我很重视你刚才说的情况。现在最重要的不是独自把它想明白，而是先确保你此刻的安全。"
-            "请立即联系当地急救或警方，或者让一个你信任的人现在来到你身边；如果可以，先远离任何可能伤害自己的物品和地点。"
-            "我是 AI，无法提供紧急救援，但我可以在你联系现实中的帮助时继续陪你梳理下一步。"
+            "I am taking what you said seriously. The priority now is immediate safety, "
+            "not working this out alone. Contact emergency help and ask a trusted person "
+            "to be physically present; move away from anything you could use to hurt "
+            "yourself. I am an AI and cannot provide emergency rescue. "
+            if use_english
+            else (
+                "我很重视你刚才说的情况。现在最重要的不是独自把它想明白，而是先确保你此刻的安全。"
+                "请立即联系当地急救或警方，或者让一个你信任的人现在来到你身边；如果可以，先远离任何可能伤害自己的物品和地点。"
+                "我是 AI，无法提供紧急救援，但我可以在你联系现实中的帮助时继续陪你梳理下一步。"
+            )
         )
     else:
         response = (
-            "谢谢你把这么难说的事情告诉我。我需要先认真确认你的安全，而不是马上分析其他问题。"
-            "我是 AI，不能替代紧急服务或专业人员；如果危险正在逼近，请立即联系当地急救、警方或可信任的人。"
+            "Thank you for saying something this difficult. I need to check your safety "
+            "before analyzing anything else. I am an AI and cannot replace emergency or "
+            "professional help. "
+            if use_english
+            else (
+                "谢谢你把这么难说的事情告诉我。我需要先认真确认你的安全，而不是马上分析其他问题。"
+                "我是 AI，不能替代紧急服务或专业人员；如果危险正在逼近，请立即联系当地急救、警方或可信任的人。"
+            )
         )
-    return response, ["你现在是否正处于立即伤害自己或他人的危险中？", "此刻有没有一个可以联系并陪着你的人？"]
+    response += card.immediate_message + card.support_message
+    return (
+        response,
+        (
+            [
+                "Are you in immediate danger of hurting yourself or someone else?",
+                "Who can you contact to be with you right now?",
+            ]
+            if use_english
+            else [
+                "你现在是否正处于立即伤害自己或他人的危险中？",
+                "此刻有没有一个可以联系并陪着你的人？",
+            ]
+        ),
+        card.actions,
+    )
 
 
 def safety_resolution_confirmed(message: str, subject: RiskSubject) -> bool:
@@ -188,13 +244,34 @@ def safety_resolution_confirmed(message: str, subject: RiskSubject) -> bool:
     return bool(safe and protection)
 
 
-def crisis_follow_up_turn(subject: RiskSubject) -> tuple[str, list[str]]:
+def crisis_follow_up_turn(
+    subject: RiskSubject, *, locale: str = "zh-CN"
+) -> tuple[str, list[str]]:
     """Keep the safety conversation active until protection is explicitly established."""
+    use_english = locale != "zh-CN"
     if subject is RiskSubject.OTHER:
+        if use_english:
+            return (
+                "Before continuing, I need to confirm that the person has real-world help. "
+                "Not mentioning suicide again does not show that the danger has passed.",
+                [
+                    "Are they currently safe, with family, emergency responders, or police "
+                    "actually involved?"
+                ],
+            )
         return (
             "在继续分析其他事情前，我还需要确认对方是否已经获得现实中的帮助。"
             "仅仅暂时没再提到自杀，并不能说明危险已经解除。",
             ["对方现在安全吗，并且是否已有家人、急救人员或警方实际介入？"],
+        )
+    if use_english:
+        return (
+            "You have not repeated the intent to harm yourself, but that alone does not "
+            "show the danger has passed. We need one concrete safety condition first.",
+            [
+                "Are you safe now, with someone present, real-world help contacted, or "
+                "access to means reduced?"
+            ],
         )
     return (
         "我听到你这一刻没有再次表达伤害自己的打算，但我还不能据此判断危险已经过去。"

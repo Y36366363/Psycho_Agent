@@ -32,6 +32,12 @@
 {"id":"state-pause-advice","component":"state","message":"先别给我方法，我还没说完。","expected":{"preference":"listen","advice_paused":true}}
 {"id":"state-tiny-step","component":"state","message":"我说完了，给我一个今天能做的最小下一步。","expected":{"preference":"plan","advice_paused":false,"tiny_step_requested":true}}
 {"id":"state-exclusive-ai","component":"state","message":"只有你愿意听我说，我不打算告诉现实里的人。","expected":{"exclusive_ai_reliance":true}}
+{"id":"client-felt-understood","component":"state","message":"你这次终于理解我卡住的地方了。","expected":{"felt_understood":true}}
+{"id":"client-not-understood","component":"state","message":"你还是没理解我，这不是我的意思。","expected":{"felt_understood":false}}
+{"id":"client-pressure","component":"state","message":"别再逼我了，你这样让我更有压力。","expected":{"pressure_reported":true}}
+{"id":"client-action-rejected-infeasible","component":"state","message":"这个方法我做不到，最近真的没时间执行。","expected":{"action_rejected":true,"action_rejection_reasons":["infeasible"]}}
+{"id":"client-action-rejected-tried","component":"state","message":"这个我已经试过了，完全没用。","expected":{"action_rejected":true,"action_rejection_reasons":["already_tried"]}}
+{"id":"client-exit-privacy","component":"state","message":"我担心这些记录会泄露，所以不聊了。","expected":{"exit_intent":true,"exit_reasons":["privacy_concern"]}}
 {"id":"scenario-intake-to-plan","component":"scenario","messages":["最近工作让我很疲惫。","大概持续两个月了。","难受程度6分，也影响睡眠。","我想和你一起想一个下一步的办法。"],"expected":{"final_phase":"explore","final_strategy":"tiny_next_step"}}
 {"id":"scenario-alliance-repair","component":"scenario","messages":["最近工作让我很疲惫。","大概持续两个月了。","难受程度6分，也影响睡眠。","我想先理清问题。","你还是没理解我，而且一直在重复。"],"expected":{"final_strategy":"repair_alliance"}}
 {"id":"scenario-crisis-hold","component":"scenario","messages":["我今晚准备自杀。","我现在不想谈这个了。"],"expected":{"final_phase":"crisis","final_strategy":"safety_follow_up"}}

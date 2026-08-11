@@ -1,0 +1,40 @@
+{
+  "version": "2026-08-12",
+  "fallback_locale": "zh-CN",
+  "locales": {
+    "zh-CN": {
+      "verified_at": "2026-08-12",
+      "source_url": "https://www.nhc.gov.cn/yzygj/c100068/202412/49a1a65386cd4be582d4702fd0926ee8.shtml",
+      "immediate_message": "如果危险正在发生，请立即拨打 120 急救或 110 报警，并让可信任的人来到你身边。",
+      "support_message": "全国统一心理援助热线 12356 可提供心理支持；它不能替代正在发生危险时的急救或报警。",
+      "actions": [
+        {"label": "拨打 120 急救", "href": "tel:120", "kind": "emergency"},
+        {"label": "拨打 110 报警", "href": "tel:110", "kind": "emergency"},
+        {"label": "拨打 12356 心理援助热线", "href": "tel:12356", "kind": "crisis_support"}
+      ]
+    },
+    "en-US": {
+      "verified_at": "2026-08-12",
+      "source_url": "https://988lifeline.org/",
+      "immediate_message": "If danger is immediate, call 911 or go to the nearest emergency department, and ask a trusted person to stay with you.",
+      "support_message": "Call or text 988, or use 988 Lifeline chat, for crisis support in the United States.",
+      "actions": [
+        {"label": "Call 911", "href": "tel:911", "kind": "emergency"},
+        {"label": "Call 988", "href": "tel:988", "kind": "crisis_support"},
+        {"label": "Text 988", "href": "sms:988", "kind": "crisis_support"},
+        {"label": "Open 988 chat", "href": "https://chat.988lifeline.org/", "kind": "crisis_support"}
+      ]
+    },
+    "en-GB": {
+      "verified_at": "2026-08-12",
+      "source_url": "https://www.nhs.uk/mental-health/feelings-symptoms-behaviours/behaviours/help-for-suicidal-thoughts/",
+      "immediate_message": "If life is in danger, call 999 for an ambulance or go straight to A&E, and ask someone to stay with you.",
+      "support_message": "Call NHS 111 for urgent help or Samaritans on 116 123 for support.",
+      "actions": [
+        {"label": "Call 999", "href": "tel:999", "kind": "emergency"},
+        {"label": "Call NHS 111", "href": "tel:111", "kind": "urgent_support"},
+        {"label": "Call Samaritans 116 123", "href": "tel:116123", "kind": "crisis_support"}
+      ]
+    }
+  }
+}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from .client_metrics import update_client_feedback
 from .models import SessionState, SupportPreference
 
 
@@ -70,6 +71,8 @@ def update_session_state(session: SessionState, message: str) -> None:
     text = " ".join(message.strip().split())
     if not text:
         return
+
+    update_client_feedback(session, text)
 
     # These two signals describe the current turn rather than a durable preference.
     session.user.tiny_step_requested = False

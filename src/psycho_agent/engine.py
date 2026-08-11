@@ -32,7 +32,7 @@ class ConversationEngine:
 
         if session.risk.level in {RiskLevel.ELEVATED, RiskLevel.HIGH, RiskLevel.IMMINENT}:
             session.phase = ConversationPhase.CRISIS
-            response, questions = crisis_turn(session.risk)
+            response, questions, actions = crisis_turn(session.risk, locale=session.locale)
             plan = TurnPlan(
                 phase=ConversationPhase.CRISIS,
                 strategy=Strategy.CRISIS_SUPPORT,
@@ -46,6 +46,7 @@ class ConversationEngine:
                 safety=session.risk,
                 should_generate_normally=False,
                 fixed_response=response,
+                actions=actions,
             )
             self._record_plan(session, plan)
             return plan
@@ -57,7 +58,9 @@ class ConversationEngine:
                 session.phase = ConversationPhase.CRISIS
                 # Preserve the active crisis subject/level across low-information replies.
                 session.risk = previous_risk
-                response, questions = crisis_follow_up_turn(previous_risk.subject)
+                response, questions = crisis_follow_up_turn(
+                    previous_risk.subject, locale=session.locale
+                )
                 plan = TurnPlan(
                     phase=ConversationPhase.CRISIS,
                     strategy=Strategy.SAFETY_FOLLOW_UP,
@@ -109,4 +112,8 @@ def format_plan(plan: TurnPlan) -> str:
         body = f"[本轮目标] {plan.response_goal}"
     if plan.questions:
         body += "\n[建议问题] " + plan.questions[0]
+    if plan.actions:
+        body += "\n[可操作资源] " + " | ".join(
+            f"{action.label}: {action.href}" for action in plan.actions
+        )
     return body

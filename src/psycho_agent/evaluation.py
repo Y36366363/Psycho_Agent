@@ -68,6 +68,12 @@ def evaluate_case(case: dict[str, Any]) -> EvaluationResult:
             "advice_paused": session.user.advice_paused,
             "tiny_step_requested": session.user.tiny_step_requested,
             "exclusive_ai_reliance": session.user.exclusive_ai_reliance,
+            "felt_understood": session.client_feedback.felt_understood,
+            "pressure_reported": session.client_feedback.pressure_reported,
+            "action_rejected": session.client_feedback.action_rejected,
+            "action_rejection_reasons": session.client_feedback.action_rejection_reasons,
+            "exit_intent": session.client_feedback.exit_intent,
+            "exit_reasons": session.client_feedback.exit_reasons,
         }
     elif component == "scenario":
         session = SessionState(session_id=f"eval-{case['id']}")

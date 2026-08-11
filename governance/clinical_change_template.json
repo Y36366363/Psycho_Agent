@@ -1,0 +1,19 @@
+{
+  "change_id": "strategy-example-0.0.0",
+  "component": "strategy_router",
+  "version": "0.0.0",
+  "summary": "Describe the observable behavior being changed.",
+  "rationale": "Explain the user benefit and plausible harms.",
+  "evidence": [
+    "Link to unit and behavioral cases",
+    "Link to blinded comparison or expert review"
+  ],
+  "rollback_version": "previous-approved-version",
+  "submitted_by": "owner-id",
+  "required_reviews": {
+    "clinical": 2,
+    "safety": 1,
+    "independent_reviewer_ids": true
+  },
+  "note": "This is an unapproved template and must never be treated as an active policy manifest."
+}

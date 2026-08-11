@@ -85,3 +85,27 @@ Normal drafts still receive at most one model rewrite. If the rewritten response
 **Status:** accepted
 
 Qualitative comparison uses versioned behavioral anchors divided into exploration, insight, action, and cross-cutting dimensions. This borrows the interpretable stage structure of ESC-Judge but does not collapse alliance repair, safety boundaries, autonomy, or naturalness into a therapy-effectiveness claim. Automated judges may assist scaling later, but blinded human and clinician ratings remain necessary for consequential evaluation.
+
+## ADR-015: Long-term memory is opt-in, purpose-scoped, and erasable
+
+**Status:** accepted
+
+Ordinary session state remains ephemeral. Long-term memory cannot be written until the user grants explicit consent for a named scope such as preferences, goals, support network, or attempted actions. Consent for one scope does not authorize another. Users can inspect and export stored items, delete one item, revoke a scope with linked deletion, or delete everything. Retention expiry is mandatory. Audit events record operations and identifiers, not memory text. The current vault is deliberately in-memory; encrypted persistence and authentication are separate deployment requirements.
+
+## ADR-016: Crisis resources are verified data, not generated text
+
+**Status:** accepted
+
+Phone numbers and escalation links live in a versioned registry with locale, official source, and verification date. Supported actions are rendered as `tel:`, `sms:`, or HTTPS links. An unknown locale never borrows another country's number or asks a model to invent one; it returns a neutral instruction to contact local emergency services with no direct number. The registry currently covers `zh-CN`, `en-US`, and `en-GB` and requires periodic regional review.
+
+## ADR-017: Clinical behavior changes require independent approval and rollback
+
+**Status:** accepted
+
+Changes to safety, strategies, reviewer rules, crisis text, or therapeutic-sounding skills require linked evidence, two distinct clinical approvals, and one independent safety approval before activation. Reviewer identity cannot be counted twice. Previously active versions remain addressable, and a safety-role actor can perform a reasoned emergency rollback. This code provides workflow enforcement and audit records; verifying professional credentials remains an organizational responsibility.
+
+## ADR-018: Evaluate the client side and reviewer agreement
+
+**Status:** accepted
+
+Silence is not satisfaction. Felt understanding remains unknown until explicitly reported. Pressure, correction, action rejection, rejection reasons, exit intent, and exit reasons are independent client-side signals. Clinician evaluation removes even anonymous model aliases from rating packets and reports agreement per dimension using exact agreement and pairwise quadratic-weighted kappa; it does not average safety and warmth into one score.

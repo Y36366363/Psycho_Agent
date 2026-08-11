@@ -87,12 +87,36 @@ class AllianceState:
 
 
 @dataclass(slots=True)
+class ClientFeedbackState:
+    """Explicit user-side experience signals; unknown is distinct from positive."""
+
+    felt_understood: bool | None = None
+    pressure_reported: bool = False
+    action_rejected: bool = False
+    action_rejection_reasons: list[str] = field(default_factory=list)
+    exit_intent: bool = False
+    exit_reasons: list[str] = field(default_factory=list)
+    correction_count: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class ActionLink:
+    """A directly renderable escalation action for a future web or mobile UI."""
+
+    label: str
+    href: str
+    kind: str
+
+
+@dataclass(slots=True)
 class SessionState:
     session_id: str
+    locale: str = "zh-CN"
     phase: ConversationPhase = ConversationPhase.INTAKE
     user: UserState = field(default_factory=UserState)
     risk: SafetyAssessment = field(default_factory=SafetyAssessment)
     alliance: AllianceState = field(default_factory=AllianceState)
+    client_feedback: ClientFeedbackState = field(default_factory=ClientFeedbackState)
     turn_count: int = 0
     intake_step: int = 0
     used_strategies: list[Strategy] = field(default_factory=list)
@@ -113,6 +137,7 @@ class TurnPlan:
     safety: SafetyAssessment = field(default_factory=SafetyAssessment)
     should_generate_normally: bool = True
     fixed_response: str | None = None
+    actions: list[ActionLink] = field(default_factory=list)
 
     def as_prompt_context(self) -> str:
         """Return a compact provider-neutral instruction block for an LLM adapter."""

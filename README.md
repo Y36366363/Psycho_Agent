@@ -1,5 +1,12 @@
 # Updates 8/12/2026
 
+- Added a consent-gated long-term memory vault that defaults to in-memory storage and supports purpose-scoped consent, view/export, per-item deletion, scope revocation with deletion, full deletion, retention expiry, and content-free audit events.
+- Added verified crisis-resource cards for China, the United States, and the United Kingdom, including official-source metadata, safe unknown-locale fallback, direct `tel:`/`sms:`/chat actions, and an accessible HTML action panel.
+- Added clinical change governance requiring two independent clinical approvals and one safety approval before activation, with version history, evidence links, event logs, and safety-officer rollback.
+- Added provider-blind clinician rating packets that remove model aliases, keep the mapping in an ignored file, and report exact agreement plus pairwise quadratic-weighted kappa per rubric dimension.
+- Added eight synthetic-user profiles spanning communication style, cultural context, trust, prior help, AI attitude, practical constraints, correction behavior, and exit triggers, each with explicit anti-stereotype constraints.
+- Added client-side experience state for explicit understood/misunderstood feedback, pressure, action rejection and its reason, correction count, exit intent, and exit reason; unknown feedback is never counted as success.
+- Expanded the suite to 81 passing unit tests and 47/47 offline behavioral cases. See the [governance and evaluation guide](docs/governance-and-evaluation.md).
 - Added user-controlled pacing signals so “I have not finished” interrupts intake, suppresses questions/advice, and remains active until the user explicitly resumes problem solving.
 - Added direct tiny-step routing that supplies one concrete low-effort action instead of continuing assessment, even when distress intensity would otherwise trigger generic grounding.
 - Added a real-world-bridge strategy for exclusive AI reliance, requiring transparent AI limits and one non-coercive route to a trusted person or qualified professional.
@@ -128,13 +135,19 @@ The behavioral suite is stored in `evaluations/behavior_cases.jsonl`. It checks 
 
 ```text
 src/psycho_agent/
+  client_metrics.py explicit user-side experience, rejection, and exit signals
+  clinical_evaluation.py blind clinician packets and inter-rater agreement
+  crisis_resources.py verified locale resources and actionable crisis cards
   engine.py       conversation orchestrator
   generator.py    draft, review, and bounded rewrite workflow
+  governance.py   clinical change approval, activation, and rollback
   intake.py       staged initial interview
   models.py       typed conversation state and turn plans
   providers.py    OpenAI, DeepSeek, and Gemini adapters
+  privacy.py      consent-gated long-term memory vault
   reviewer.py     deterministic and semantic response review
   safety.py       conservative first-pass risk triage
+  simulated_users.py diverse synthetic evaluation profile loader
   state_update.py explicit emotion, preference, impact, and rupture signals
   strategy.py     phase-aware support strategy selection
   evaluation.py   offline behavioral evaluation runner
@@ -150,11 +163,11 @@ This repository is research-stage software. It must not be presented as medical 
 
 ## Roadmap
 
-1. Add repeatable human and clinician review with inter-rater agreement over a larger, profile-varied adversarial scenario set.
-2. Add a minimal web conversation interface.
-3. Add consent-aware long-term memory and privacy controls.
+1. Recruit qualified reviewers to complete the blind packets and establish inter-rater reliability.
+2. Add authenticated web controls for consent, memory view/export/deletion, crisis actions, and feedback.
+3. Add encrypted persistence and verified identity/authorization around memory and governance APIs.
 4. Add provider fallback and cost instrumentation without logging private content.
-5. Conduct review with qualified mental-health professionals before any public-facing trial.
+5. Expand localized resources and synthetic profiles through regional and clinical review.
 
 ## Research review
 
