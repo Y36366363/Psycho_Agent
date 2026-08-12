@@ -1,5 +1,11 @@
 # Updates 8/12/2026
 
+- Replaced the optional in-process-only memory path with an authenticated SQLite option that encrypts every saved value using AES-256-GCM, binds ciphertext to its owner and purpose, and preserves consent, view/export, retention, scope revocation, and deletion controls.
+- Added salted scrypt password authentication, short-lived server-side sessions, CSRF enforcement, login throttling, owner isolation, security headers, and ignored database/key locations.
+- Added a manual professional-eligibility register: clinical and safety approvals count only after official-source evidence, verifier, validity dates, and a separately reviewed conflict-of-interest declaration are recorded; expired, pending, or recused reviewers are rejected.
+- Added durable blind-rating intake that accepts only eligible clinical reviewers, prevents incomplete finalization and post-finalization edits, excludes drafts, and continues to report `awaiting_verified_professional_ratings` until at least two real verified professionals finish.
+- Added a runnable authenticated Web prototype with AI/non-diagnostic disclosure, memory controls, JSON export, and embedded locale-aware crisis action pages. It is a local prototype, not a public production deployment.
+- Expanded the suite to 90 passing unit and HTTP integration tests while retaining 47/47 offline behavioral cases. See the [secure Web and professional review guide](docs/secure-web-and-professional-review.md) and [test report](evaluations/results/2026-08-12/security_web_review_report.md).
 - Added a consent-gated long-term memory vault that defaults to in-memory storage and supports purpose-scoped consent, view/export, per-item deletion, scope revocation with deletion, full deletion, retention expiry, and content-free audit events.
 - Added verified crisis-resource cards for China, the United States, and the United Kingdom, including official-source metadata, safe unknown-locale fallback, direct `tel:`/`sms:`/chat actions, and an accessible HTML action panel.
 - Added clinical change governance requiring two independent clinical approvals and one safety approval before activation, with version history, evidence links, event logs, and safety-officer rollback.
@@ -46,7 +52,7 @@
 
 Psycho Agent is an experimental, human-centered psychological support agent. Its goal is not to imitate a therapist's identity or simply sound agreeable. It tries to follow a disciplined support process: understand the person's current state, decide what kind of help is appropriate, respond naturally, track progress, and avoid repeating generic advice.
 
-The current release plans each conversation turn, generates a provider-backed natural reply, reviews the draft, and performs at most one corrective rewrite. Two high-impact residual failures—AI-dependency encouragement and reinforcement of unsupported certainty—fall back to a deterministic safe response without another model call. A minimal user interface will come in a later milestone.
+The current release plans each conversation turn, generates a provider-backed natural reply, reviews the draft, and performs at most one corrective rewrite. Two high-impact residual failures—AI-dependency encouragement and reinforcement of unsupported certainty—fall back to a deterministic safe response without another model call. An authenticated local Web prototype now provides encrypted-memory controls and embedded crisis actions; public production deployment remains a later milestone.
 
 ## Product principles
 
@@ -123,6 +129,17 @@ Run tests:
 python -m unittest discover -s tests -v
 ```
 
+Run the authenticated local Web prototype after generating a master key and setting both new
+values in the ignored `.env` file:
+
+```bash
+python -m psycho_agent.secure_store generate-key
+python -m psycho_agent.web_app
+```
+
+Open `http://127.0.0.1:8000` and sign in as `local-admin`. This development server is for local
+evaluation only; it does not provide production TLS, managed secrets, backups, or high availability.
+
 Run the research-informed offline behavior suite:
 
 ```bash
@@ -137,6 +154,7 @@ The behavioral suite is stored in `evaluations/behavior_cases.jsonl`. It checks 
 src/psycho_agent/
   client_metrics.py explicit user-side experience, rejection, and exit signals
   clinical_evaluation.py blind clinician packets and inter-rater agreement
+  credentials.py manual credential evidence and conflict-of-interest gates
   crisis_resources.py verified locale resources and actionable crisis cards
   engine.py       conversation orchestrator
   generator.py    draft, review, and bounded rewrite workflow
@@ -145,11 +163,14 @@ src/psycho_agent/
   models.py       typed conversation state and turn plans
   providers.py    OpenAI, DeepSeek, and Gemini adapters
   privacy.py      consent-gated long-term memory vault
+  rating_service.py verified human rating intake and finalization
   reviewer.py     deterministic and semantic response review
   safety.py       conservative first-pass risk triage
   simulated_users.py diverse synthetic evaluation profile loader
   state_update.py explicit emotion, preference, impact, and rupture signals
   strategy.py     phase-aware support strategy selection
+  secure_store.py encrypted persistent memory implementation
+  web_app.py      authenticated local memory and crisis interface
   evaluation.py   offline behavioral evaluation runner
   live_compare.py provider-blinded live multi-turn comparison
 tests/            behavior-focused unit tests
@@ -163,11 +184,11 @@ This repository is research-stage software. It must not be presented as medical 
 
 ## Roadmap
 
-1. Recruit qualified reviewers to complete the blind packets and establish inter-rater reliability.
-2. Add authenticated web controls for consent, memory view/export/deletion, crisis actions, and feedback.
-3. Add encrypted persistence and verified identity/authorization around memory and governance APIs.
+1. Recruit and independently verify qualified reviewers to complete the blind packets and establish inter-rater reliability.
+2. Commission jurisdiction-specific legal/privacy review, threat modeling, penetration testing, and clinical safety review.
+3. Move local secrets and SQLite data to managed identity, key management, encrypted backups, rotation, and production TLS.
 4. Add provider fallback and cost instrumentation without logging private content.
-5. Expand localized resources and synthetic profiles through regional and clinical review.
+5. Expand localized resources and synthetic profiles through regional and clinical review, with scheduled resource re-verification.
 
 ## Research review
 

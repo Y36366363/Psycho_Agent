@@ -6,7 +6,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Protocol
 
 
 def _now() -> datetime:
@@ -73,14 +73,20 @@ class GovernanceError(RuntimeError):
     pass
 
 
+class EligibilityRegistry(Protocol):
+    def eligibility(self, reviewer_id: str, role: ReviewerRole) -> Any: ...
+
+
 class ClinicalChangeRegistry:
     """Require two clinical reviewers plus an independent safety approval."""
 
     def __init__(
-        self, *, required_clinical_approvals: int = 2, required_safety_approvals: int = 1
+        self, *, required_clinical_approvals: int = 2, required_safety_approvals: int = 1,
+        eligibility_registry: EligibilityRegistry | None = None,
     ) -> None:
         self.required_clinical_approvals = required_clinical_approvals
         self.required_safety_approvals = required_safety_approvals
+        self.eligibility_registry = eligibility_registry
         self._changes: dict[str, ClinicalChange] = {}
         self._active_by_component: dict[str, str] = {}
         self._events: list[GovernanceEvent] = []
@@ -102,6 +108,12 @@ class ClinicalChangeRegistry:
             raise GovernanceError(f"Change cannot be reviewed in status {change.status.value}.")
         if any(item.reviewer_id == approval.reviewer_id for item in change.approvals):
             raise GovernanceError("A reviewer may submit only one decision per change.")
+        if self.eligibility_registry and approval.role in {
+            ReviewerRole.CLINICAL, ReviewerRole.SAFETY
+        }:
+            result = self.eligibility_registry.eligibility(approval.reviewer_id, approval.role)
+            if not result.eligible:
+                raise GovernanceError(f"Reviewer is ineligible: {result.reason}.")
         change.approvals.append(approval)
         if approval.decision is ReviewDecision.REJECT:
             change.status = ChangeStatus.REJECTED

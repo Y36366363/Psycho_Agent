@@ -14,3 +14,5 @@ dist/
 build/
 evaluations/results/**/provider_key.json
 evaluations/ratings/**/rating_key.json
+data/
+*.sqlite3
