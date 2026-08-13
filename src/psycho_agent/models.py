@@ -109,6 +109,21 @@ class ActionLink:
     kind: str
 
 
+@dataclass(frozen=True, slots=True)
+class DecisionEvidence:
+    """Privacy-minimized routing evidence; never stores the user's message."""
+
+    turn: int
+    phase: str
+    strategy: str
+    risk_level: str
+    risk_subject: str
+    decision_basis: tuple[str, ...]
+    fixed_response: bool
+    action_kinds: tuple[str, ...]
+    policy_versions: tuple[str, ...]
+
+
 @dataclass(slots=True)
 class SessionState:
     session_id: str
@@ -127,6 +142,7 @@ class SessionState:
     recent_user_messages: list[str] = field(default_factory=list)
     recent_assistant_responses: list[str] = field(default_factory=list)
     review_issue_history: list[list[str]] = field(default_factory=list)
+    decision_history: list[DecisionEvidence] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -140,6 +156,7 @@ class TurnPlan:
     should_generate_normally: bool = True
     fixed_response: str | None = None
     actions: list[ActionLink] = field(default_factory=list)
+    decision_basis: list[str] = field(default_factory=list)
 
     def as_prompt_context(self) -> str:
         """Return a compact provider-neutral instruction block for an LLM adapter."""

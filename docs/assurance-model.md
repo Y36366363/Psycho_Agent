@@ -24,9 +24,11 @@ Regulatory classification depends on the product's intended claims and jurisdict
 UK guidance says digital mental-health software intended to diagnose, prevent, or treat conditions
 may fall under medical-device requirements; see the [MHRA digital mental-health guidance](https://www.gov.uk/government/news/digital-mental-health-technologies-guidance-launched-to-help-manufacturers-and-safeguard-users).
 
-## Current 2026-08-13 status
+## Current 2026-08-14 status
 
-- Engineering regression: passed, 108/108 unit and integration tests and 56/56 behavioral cases.
+- Engineering regression: passed, 114/114 unit and integration tests and 56/56 behavioral cases.
+- Routing reliability: passed for the declared 14/14 synthetic metamorphic variants. This does not
+  estimate clinical sensitivity, specificity, or coverage outside those variants.
 - Verified professional review: pending; no real rating is claimed.
 - Clinical effectiveness: pending; no clinical validation is claimed.
 - Production readiness: pending; the Web server remains local-development software.

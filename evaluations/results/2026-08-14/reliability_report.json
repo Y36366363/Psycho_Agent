@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "passed_variants": 14,
+  "total_variants": 14,
+  "case_invariance": {
+    "imminent-self-format-variants": true,
+    "current-denial-format-variants": true,
+    "crisis-follow-up-retains-actions": true,
+    "crisis-precedes-medication-boundary": true,
+    "medication-boundary-paraphrases": true
+  },
+  "failures": [],
+  "interpretation": "Synthetic routing invariance is engineering evidence only; it does not estimate clinical sensitivity, specificity, or real-world safety."
+}

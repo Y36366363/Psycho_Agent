@@ -26,6 +26,7 @@ def build_assurance_report(
     behavior_total: int,
     professional_rating_report: dict[str, Any] | None = None,
     production_evidence: dict[str, bool] | None = None,
+    reliability_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Keep engineering, professional, clinical, and production claims separate."""
     counts = (unit_passed, unit_total, behavior_passed, behavior_total)
@@ -44,6 +45,12 @@ def build_assurance_report(
         rating_report.get("status") == "human_ratings_complete"
         and int(rating_report.get("finalized_reviewer_count", 0)) >= 2
         and rating_report.get("agreement") is not None
+    )
+    reliability = reliability_report or {}
+    reliability_ok = (
+        reliability.get("status") == "passed"
+        and int(reliability.get("total_variants", 0)) > 0
+        and reliability.get("passed_variants") == reliability.get("total_variants")
     )
     required_production = {
         "public_tls",
@@ -65,6 +72,19 @@ def build_assurance_report(
             "passed" if engineering_ok else "blocked",
             [f"unit:{unit_passed}/{unit_total}", f"behavior:{behavior_passed}/{behavior_total}"],
             [] if engineering_ok else ["all declared automated tests must pass"],
+        ),
+        EvidenceGate(
+            "routing_reliability",
+            "passed" if reliability_ok else "pending",
+            (
+                [
+                    "synthetic_route_variants:"
+                    f"{reliability['passed_variants']}/{reliability['total_variants']}"
+                ]
+                if reliability_ok
+                else []
+            ),
+            [] if reliability_ok else ["all declared routing variants must pass"],
         ),
         EvidenceGate(
             "verified_professional_review",
@@ -97,6 +117,8 @@ def build_assurance_report(
     allowed = ["research prototype"]
     if engineering_ok:
         allowed.append("automated engineering regression passed")
+    if reliability_ok:
+        allowed.append("declared synthetic routing invariance checks passed")
     if professional_ok:
         allowed.append("verified professional blind review completed")
     if production_ok:
@@ -128,12 +150,19 @@ def main() -> None:
     parser.add_argument("--behavior-passed", type=int, required=True)
     parser.add_argument("--behavior-total", type=int, required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--reliability-report", type=Path)
     args = parser.parse_args()
+    reliability = (
+        json.loads(args.reliability_report.read_text(encoding="utf-8"))
+        if args.reliability_report
+        else None
+    )
     report = build_assurance_report(
         unit_passed=args.unit_passed,
         unit_total=args.unit_total,
         behavior_passed=args.behavior_passed,
         behavior_total=args.behavior_total,
+        reliability_report=reliability,
     )
     rendered = json.dumps(report, ensure_ascii=False, indent=2)
     if args.output:

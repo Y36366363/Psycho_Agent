@@ -27,6 +27,19 @@ class MultiTurnScenarioTests(unittest.TestCase):
         self.assertEqual(plan.phase, ConversationPhase.CRISIS)
         self.assertEqual(plan.strategy, Strategy.SAFETY_FOLLOW_UP)
         self.assertFalse(plan.should_generate_normally)
+        self.assertGreaterEqual(len(plan.actions), 1)
+        evidence = self.session.decision_history[-1]
+        self.assertIn("unresolved_prior_crisis", evidence.decision_basis)
+        self.assertTrue(evidence.fixed_response)
+        self.assertNotIn("我现在不想谈这个了", repr(evidence))
+
+    def test_decision_evidence_is_bounded_and_contains_no_user_text(self) -> None:
+        for index in range(25):
+            self.engine.process(self.session, f"普通压力描述 {index}")
+        self.assertEqual(len(self.session.decision_history), 20)
+        evidence = self.session.decision_history[-1]
+        self.assertEqual(evidence.turn, 25)
+        self.assertNotIn("普通压力描述", repr(evidence))
 
     def test_crisis_clears_only_with_safety_and_protection(self) -> None:
         self.engine.process(self.session, "我今晚准备自杀")

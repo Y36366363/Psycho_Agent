@@ -13,6 +13,25 @@ class CrisisAuditTests(unittest.TestCase):
         self.assertEqual(report["failed_critical_checks"], [])
         self.assertNotIn("score", report)
 
+    def test_unresolved_follow_up_keeps_actions_and_passes_audit(self):
+        for locale in ("zh-CN", "en-US", "en-GB"):
+            with self.subTest(locale=locale):
+                session = SessionState(f"audit-{locale}", locale=locale)
+                engine = ConversationEngine()
+                engine.process(session, "我今晚准备自杀。")
+                plan = engine.process(session, "我还不能确认安全。")
+                self.assertEqual(plan.strategy, Strategy.SAFETY_FOLLOW_UP)
+                self.assertGreaterEqual(len(plan.actions), 1)
+                self.assertEqual(audit_crisis_plan(plan)["status"], "passed")
+                self.assertNotIn(".Call", plan.fixed_response or "")
+
+    def test_unknown_locale_cannot_falsely_pass_direct_action_check(self):
+        session = SessionState("audit-unknown", locale="fr-FR")
+        plan = ConversationEngine().process(session, "我今晚准备自杀。")
+        report = audit_crisis_plan(plan)
+        self.assertEqual(report["status"], "hard_fail")
+        self.assertIn("direct_action", report["failed_critical_checks"])
+
     def test_missing_real_world_action_is_a_visible_hard_failure(self):
         plan = TurnPlan(
             phase=ConversationPhase.CRISIS,

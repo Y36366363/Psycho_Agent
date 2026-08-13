@@ -1,3 +1,12 @@
+# Updates 8/14/2026
+
+- Fixed a multi-turn crisis continuity defect: unresolved second and later crisis turns now retain locale-verified call/message actions, AI-limit language, safety questions, and the same non-compensatory crisis audit as the first turn.
+- Added Unicode NFKC, zero-width-character removal, and conservative Chinese separator normalization so formatting changes do not silently bypass tested crisis routes; explicit-denial negative controls prevent indiscriminate escalation.
+- Added a versioned metamorphic reliability suite covering 14 variants across crisis formatting, denial, unresolved follow-up, crisis-versus-medication precedence, and Chinese/English medication-boundary paraphrases.
+- Added a separate assurance gate for routing reliability. Unit tests can remain green while this gate stays pending if any declared route variant fails; passing it does not claim clinical sensitivity, specificity, or real-world safety.
+- Added privacy-minimized decision evidence with phase, strategy, risk category, named decision basis, action kinds, and policy versions. It stores no user or assistant text and retains only the latest 20 records.
+- Expanded the suite to 114 passing unit and integration tests, 56/56 behavioral cases, and 14/14 routing-reliability variants. See the [August 14 reliability validation](docs/reliability-validation-2026-08-14.md), [machine-readable report](evaluations/results/2026-08-14/reliability_report.json), and [test report](evaluations/results/2026-08-14/test_report.md).
+
 # Updates 8/13/2026
 
 - Added an [August 13 competitive review](docs/competitive-review-2026-08-13.md) covering CounselBench, VERA-MH, MHSafeEval, DialogGuard, CAPE's market sample, protocol-safety research, and PsychAgent, with explicit adopt/defer/reject decisions.
@@ -181,6 +190,7 @@ src/psycho_agent/
   providers.py    OpenAI, DeepSeek, and Gemini adapters
   privacy.py      consent-gated long-term memory vault
   rating_service.py verified human rating intake and finalization
+  reliability_evaluation.py versioned metamorphic and multi-turn route checks
   reviewer.py     deterministic and semantic response review
   safety.py       conservative first-pass risk triage
   scope_guard.py  non-abandoning boundaries around unsupported clinical procedures

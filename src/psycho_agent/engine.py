@@ -3,7 +3,14 @@
 from __future__ import annotations
 
 from .intake import INTAKE_STEPS, build_intake_plan, intake_complete
-from .models import ConversationPhase, RiskLevel, SessionState, Strategy, TurnPlan
+from .models import (
+    ConversationPhase,
+    DecisionEvidence,
+    RiskLevel,
+    SessionState,
+    Strategy,
+    TurnPlan,
+)
 from .safety import (
     assess_safety,
     crisis_follow_up_turn,
@@ -48,6 +55,7 @@ class ConversationEngine:
                 should_generate_normally=False,
                 fixed_response=response,
                 actions=actions,
+                decision_basis=["new_explicit_risk_signal", "crisis_precedence"],
             )
             self._record_plan(session, plan)
             return plan
@@ -59,7 +67,7 @@ class ConversationEngine:
                 session.phase = ConversationPhase.CRISIS
                 # Preserve the active crisis subject/level across low-information replies.
                 session.risk = previous_risk
-                response, questions = crisis_follow_up_turn(
+                response, questions, actions = crisis_follow_up_turn(
                     previous_risk.subject, locale=session.locale
                 )
                 plan = TurnPlan(
@@ -74,6 +82,8 @@ class ConversationEngine:
                     safety=session.risk,
                     should_generate_normally=False,
                     fixed_response=response,
+                    actions=actions,
+                    decision_basis=["unresolved_prior_crisis", "safety_not_confirmed"],
                 )
                 self._record_plan(session, plan)
                 return plan
@@ -98,6 +108,10 @@ class ConversationEngine:
                 fixed_response=clinical_boundary_response(
                     scope_boundary, locale=session.locale
                 ),
+                decision_basis=[
+                    "clinical_scope_boundary",
+                    f"scope:{scope_boundary.scope.value}",
+                ],
             )
             self._record_plan(session, plan)
             return plan
@@ -127,6 +141,21 @@ class ConversationEngine:
         session.used_strategies.append(plan.strategy)
         session.recent_response_goals.append(plan.response_goal)
         session.recent_response_goals[:] = session.recent_response_goals[-3:]
+        basis = tuple(plan.decision_basis or ["state_and_phase_routing"])
+        session.decision_history.append(
+            DecisionEvidence(
+                turn=session.turn_count,
+                phase=plan.phase.value,
+                strategy=plan.strategy.value,
+                risk_level=plan.safety.level.value,
+                risk_subject=plan.safety.subject.value,
+                decision_basis=basis,
+                fixed_response=plan.fixed_response is not None,
+                action_kinds=tuple(sorted({action.kind for action in plan.actions})),
+                policy_versions=("safety:2026-08-14", "scope:2026-08-13"),
+            )
+        )
+        session.decision_history[:] = session.decision_history[-20:]
 
 
 def format_plan(plan: TurnPlan) -> str:

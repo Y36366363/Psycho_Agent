@@ -7,6 +7,7 @@ must eventually be combined with semantic classification and expert-reviewed pol
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections.abc import Iterable
 
 from .crisis_resources import get_crisis_resource_card
@@ -70,6 +71,10 @@ _FICTION_OR_GENERAL_PATTERNS = (
 )
 
 
+def _with_resource_text(response: str, immediate: str, support: str) -> str:
+    return " ".join(part.strip() for part in (response, immediate, support) if part.strip())
+
+
 def _matches(text: str, patterns: Iterable[str]) -> list[str]:
     return [pattern for pattern in patterns if re.search(pattern, text, re.IGNORECASE)]
 
@@ -89,7 +94,12 @@ def _risk_subject(text: str) -> RiskSubject:
 
 def assess_safety(message: str) -> SafetyAssessment:
     """Detect explicit safety signals and return an auditable preliminary level."""
-    normalized = " ".join(message.strip().split())
+    normalized = unicodedata.normalize("NFKC", message)
+    normalized = re.sub(r"[\u200b-\u200d\ufeff]", "", normalized)
+    normalized = " ".join(normalized.strip().split())
+    normalized = re.sub(
+        r"(?<=[\u4e00-\u9fff])[\s·•._—-]+(?=[\u4e00-\u9fff])", "", normalized
+    )
     if not normalized:
         return SafetyAssessment()
 
@@ -179,7 +189,9 @@ def crisis_turn(
                 "我是 AI，不能提供紧急救援。"
             )
         )
-        response += card.immediate_message + card.support_message
+        response = _with_resource_text(
+            response, card.immediate_message, card.support_message
+        )
         return (
             response,
             (
@@ -221,7 +233,7 @@ def crisis_turn(
                 "我是 AI，不能替代紧急服务或专业人员；如果危险正在逼近，请立即联系当地急救、警方或可信任的人。"
             )
         )
-    response += card.immediate_message + card.support_message
+    response = _with_resource_text(response, card.immediate_message, card.support_message)
     return (
         response,
         (
@@ -258,35 +270,60 @@ def safety_resolution_confirmed(message: str, subject: RiskSubject) -> bool:
 
 def crisis_follow_up_turn(
     subject: RiskSubject, *, locale: str = "zh-CN"
-) -> tuple[str, list[str]]:
+) -> tuple[str, list[str], list[ActionLink]]:
     """Keep the safety conversation active until protection is explicitly established."""
+    card = get_crisis_resource_card(locale)
     use_english = locale != "zh-CN"
     if subject is RiskSubject.OTHER:
         if use_english:
             return (
                 "Before continuing, I need to confirm that the person has real-world help. "
-                "Not mentioning suicide again does not show that the danger has passed.",
+                "Not mentioning suicide again does not show that the danger has passed. "
+                + _with_resource_text(
+                    "I am an AI and cannot provide emergency rescue.",
+                    card.immediate_message,
+                    card.support_message,
+                ),
                 [
                     "Are they currently safe, with family, emergency responders, or police "
                     "actually involved?"
                 ],
+                card.actions,
             )
         return (
             "在继续分析其他事情前，我还需要确认对方是否已经获得现实中的帮助。"
-            "仅仅暂时没再提到自杀，并不能说明危险已经解除。",
+            "仅仅暂时没再提到自杀，并不能说明危险已经解除。"
+            + _with_resource_text(
+                "我是 AI，不能提供紧急救援。",
+                card.immediate_message,
+                card.support_message,
+            ),
             ["对方现在安全吗，并且是否已有家人、急救人员或警方实际介入？"],
+            card.actions,
         )
     if use_english:
         return (
             "You have not repeated the intent to harm yourself, but that alone does not "
-            "show the danger has passed. We need one concrete safety condition first.",
+            "show the danger has passed. We need one concrete safety condition first. "
+            + _with_resource_text(
+                "I am an AI and cannot provide emergency rescue.",
+                card.immediate_message,
+                card.support_message,
+            ),
             [
                 "Are you safe now, with someone present, real-world help contacted, or "
                 "access to means reduced?"
             ],
+            card.actions,
         )
     return (
         "我听到你这一刻没有再次表达伤害自己的打算，但我还不能据此判断危险已经过去。"
-        "我们先确认一个具体的安全条件，再继续谈其他问题。",
+        "我们先确认一个具体的安全条件，再继续谈其他问题。"
+        + _with_resource_text(
+            "我是 AI，不能提供紧急救援。",
+            card.immediate_message,
+            card.support_message,
+        ),
         ["你现在是否安全，并且已经有人陪着、联系了现实支援，或远离了可能伤害自己的手段？"],
+        card.actions,
     )

@@ -133,3 +133,15 @@ Crisis triage remains first. Outside crisis, explicit requests for diagnosis, me
 **Status:** accepted
 
 Crisis assurance reports separate routing, model bypass, real-world escalation, direct actions, safety questions, AI identity, and secrecy/diagnosis checks. Missing a critical control is a hard failure; warmth or another passing dimension cannot compensate. No composite crisis-safety score is produced. Model judges may add hypotheses, but deterministic controls and verified human review remain authoritative for claims.
+
+## ADR-023: Reliability includes route invariance and multi-turn control continuity
+
+**Status:** accepted
+
+Reliable routing must survive meaning-preserving formatting variants and preserve critical controls across turns. Synthetic metamorphic cases cover Unicode normalization, inserted whitespace/separators, negative contrasts, paraphrases, and precedence conflicts. Unresolved crisis turns must retain verified direct actions and pass the same binary audit as the first turn. A separate assurance gate fails closed when any declared routing variant fails; this gate is engineering evidence and does not estimate clinical sensitivity or specificity.
+
+## ADR-024: Decision traces minimize content while preserving accountability
+
+**Status:** accepted
+
+Each planned turn records a bounded evidence object containing turn number, phase, strategy, risk level/subject, named routing basis, fixed-response status, action kinds, and policy versions. It never records the user message, matched text, generated reply, or memory value. The last 20 records support debugging and incident reconstruction without creating another transcript store.

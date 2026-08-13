@@ -47,6 +47,7 @@ class NaturalResponseGenerator:
     ) -> GeneratedResponse:
         if plan.fixed_response is not None:
             session.review_issue_history.append([])
+            session.review_issue_history[:] = session.review_issue_history[-12:]
             self._remember(session, user_message, plan.fixed_response)
             return GeneratedResponse(text=plan.fixed_response, draft=plan.fixed_response)
 

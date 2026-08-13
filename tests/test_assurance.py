@@ -52,3 +52,32 @@ class AssuranceTests(unittest.TestCase):
                 behavior_passed=1,
                 behavior_total=1,
             )
+
+    def test_routing_reliability_requires_all_declared_variants(self):
+        passed = build_assurance_report(
+            unit_passed=1,
+            unit_total=1,
+            behavior_passed=1,
+            behavior_total=1,
+            reliability_report={
+                "status": "passed",
+                "passed_variants": 14,
+                "total_variants": 14,
+            },
+        )
+        gate = next(g for g in passed["gates"] if g["gate"] == "routing_reliability")
+        self.assertEqual(gate["status"], "passed")
+
+        failed = build_assurance_report(
+            unit_passed=1,
+            unit_total=1,
+            behavior_passed=1,
+            behavior_total=1,
+            reliability_report={
+                "status": "failed",
+                "passed_variants": 13,
+                "total_variants": 14,
+            },
+        )
+        gate = next(g for g in failed["gates"] if g["gate"] == "routing_reliability")
+        self.assertEqual(gate["status"], "pending")
