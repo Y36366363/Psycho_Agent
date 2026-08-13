@@ -121,3 +121,15 @@ Automated regression, verified professional review, clinical effectiveness, and 
 **Status:** accepted
 
 The localized crisis-action page is public and bypasses login, sessions, memory, and model generation. Authentication failure must not block emergency or crisis-support links. All personal memory operations remain authenticated and CSRF protected. Memory consent must be selectable and revocable per purpose in the user interface, not only in an internal API.
+
+## ADR-021: General support must not silently become individualized treatment
+
+**Status:** accepted
+
+Crisis triage remains first. Outside crisis, explicit requests for diagnosis, medication adjustment, unsupervised trauma exposure, or dangerous eating-disorder procedures receive a fixed non-abandoning boundary and a practical bridge to qualified care. Ordinary discussion of feelings, prior care, medication experiences, and trauma impact remains in scope. Generated replies are independently checked because a provider can volunteer clinical direction even when the user did not request it.
+
+## ADR-022: Critical crisis failures are binary and non-compensatory
+
+**Status:** accepted
+
+Crisis assurance reports separate routing, model bypass, real-world escalation, direct actions, safety questions, AI identity, and secrecy/diagnosis checks. Missing a critical control is a hard failure; warmth or another passing dimension cannot compensate. No composite crisis-safety score is produced. Model judges may add hypotheses, but deterministic controls and verified human review remain authoritative for claims.

@@ -23,6 +23,7 @@ class IssueKind(StrEnum):
     GOAL_MISALIGNMENT = "goal_misalignment"
     EPISTEMIC_REINFORCEMENT = "epistemic_reinforcement"
     REVIEW_FAILURE = "review_failure"
+    CLINICAL_OVERREACH = "clinical_overreach"
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,6 +63,13 @@ class RuleBasedReviewer:
         r"你(?:肯定|一定)会好起来",
         r"不需要找(?:医生|心理咨询师|专业人士)",
         r"我能保证",
+    )
+    _CLINICAL_OVERREACH = (
+        r"你(?:应该|可以|需要).{0,12}"
+        r"(?:停药|减药|加药|加量|减量|换药|剂量.{0,4}(?:减半|增加|减少))",
+        r"(?:建议|推荐)你.{0,8}(?:服用|使用).{0,10}(?:药|毫克|mg)",
+        r"(?:现在|接下来).{0,8}(?:开始|进行).{0,8}(?:暴露疗法|创伤暴露|重现创伤)",
+        r"you should.{0,10}(?:stop|increase|decrease|change|take).{0,10}(?:medication|dose|mg)",
     )
     _BOUNDARY = (
         r"只有我(?:真正)?懂你",
@@ -122,6 +130,15 @@ class RuleBasedReviewer:
             IssueKind.UNSAFE_CLAIM,
             "The response makes an unsafe promise or discourages professional care.",
             "Remove guarantees and preserve appropriate professional-care options.",
+        )
+        self._match_patterns(
+            draft,
+            self._CLINICAL_OVERREACH,
+            issues,
+            IssueKind.CLINICAL_OVERREACH,
+            "The response gives individualized medication or specialized treatment direction.",
+            "Remove the clinical instruction, state the relevant limit, and help the "
+            "user prepare for qualified care.",
         )
         self._match_patterns(
             draft,
@@ -244,7 +261,7 @@ and failure to follow the turn plan. Return JSON only, with this exact shape:
 {"approved": true, "issues": [{"kind": "mechanical", "explanation": "...", "revision": "..."}]}
 Allowed kinds: sycophancy, mechanical, repetition, premature_diagnosis, advice_overload,
 unsafe_claim, boundary_overreach, question_overload, goal_misalignment,
-epistemic_reinforcement. Do not include markdown."""
+epistemic_reinforcement, clinical_overreach. Do not include markdown."""
 
     def __init__(self, model: TextModel) -> None:
         self.model = model

@@ -10,6 +10,7 @@ from .safety import (
     crisis_turn,
     safety_resolution_confirmed,
 )
+from .scope_guard import assess_clinical_scope, clinical_boundary_response
 from .state_update import update_session_state
 from .strategy import build_support_plan
 
@@ -76,6 +77,30 @@ class ConversationEngine:
                 )
                 self._record_plan(session, plan)
                 return plan
+
+        scope_boundary = assess_clinical_scope(user_message)
+        if scope_boundary is not None:
+            plan = TurnPlan(
+                phase=session.phase,
+                strategy=Strategy.CLINICAL_SCOPE_BOUNDARY,
+                response_goal=(
+                    "Set a non-abandoning boundary around unsupported individualized clinical care."
+                ),
+                instructions=[
+                    "Do not diagnose, prescribe, adjust medication, or conduct an "
+                    "unsupervised specialized protocol.",
+                    "Explain the relevant limit and offer one practical preparation "
+                    "step for qualified care.",
+                    "Do not imply that the user's ordinary emotions are too clinical to discuss here.",
+                ],
+                safety=session.risk,
+                should_generate_normally=False,
+                fixed_response=clinical_boundary_response(
+                    scope_boundary, locale=session.locale
+                ),
+            )
+            self._record_plan(session, plan)
+            return plan
 
         if session.phase is ConversationPhase.INTAKE:
             session.learned_facts.append(user_message.strip())

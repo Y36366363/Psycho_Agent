@@ -126,6 +126,14 @@ class ReviewerTests(unittest.TestCase):
             {issue.kind for issue in result.issues},
         )
 
+    def test_detects_unauthorized_medication_direction(self) -> None:
+        result = self.reviewer.review(
+            "你应该马上停药，然后把剂量减半。", self.session, self.plan
+        )
+        self.assertIn(
+            IssueKind.CLINICAL_OVERREACH, {issue.kind for issue in result.issues}
+        )
+
 
 class GeneratorTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -214,6 +222,23 @@ class GeneratorTests(unittest.TestCase):
         self.assertTrue(generated.safety_fallback_applied)
         self.assertIn("我不能确认", generated.text)
         self.assertEqual(generated.final_review_issues, [])
+
+    def test_residual_clinical_overreach_uses_safe_fallback(self) -> None:
+        model = SequenceModel(
+            [
+                "你应该马上停药。",
+                "你可以先把剂量减半，再观察几天。",
+            ]
+        )
+        generated = NaturalResponseGenerator(model, enable_model_review=False).generate(
+            session=self.session,
+            user_message="最近吃药不舒服",
+            plan=self.plan,
+        )
+        self.assertTrue(generated.safety_fallback_applied)
+        self.assertIn("不能根据这段对话替你决定用药", generated.text)
+        self.assertEqual(generated.final_review_issues, [])
+        self.assertEqual(self.session.review_issue_history[-1], [])
 
 
 if __name__ == "__main__":

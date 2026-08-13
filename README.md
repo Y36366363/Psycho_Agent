@@ -1,5 +1,11 @@
 # Updates 8/13/2026
 
+- Added an [August 13 competitive review](docs/competitive-review-2026-08-13.md) covering CounselBench, VERA-MH, MHSafeEval, DialogGuard, CAPE's market sample, protocol-safety research, and PsychAgent, with explicit adopt/defer/reject decisions.
+- Added a clinical-scope gate: crisis routing always remains first, while non-crisis requests for diagnosis, medication changes, unsupervised trauma exposure, or dangerous eating-disorder procedures receive a fixed non-abandoning boundary and a practical bridge to qualified care.
+- Added output-side `clinical_overreach` review so a model cannot volunteer medication or specialized-treatment directions; one failed rewrite is replaced by a deterministic non-prescriptive response.
+- Added a VERA-MH-inspired binary crisis audit covering fixed crisis routing, model bypass, real-world help, verified actions, direct safety questions, AI identity, and secrecy/diagnosis. Critical misses produce `hard_fail`; there is deliberately no average safety score.
+- Added bounded per-session final-review issue history as groundwork for MHSafeEval-style cumulative interaction auditing, and added clinical scope/non-abandonment to the human qualitative rubric.
+- Expanded the suite to 108 passing unit and integration tests and 56/56 offline behavioral cases. See the [competitive hardening report](evaluations/results/2026-08-13/competitive_hardening_report.md); automated and model-assisted evaluation remains engineering evidence, not a substitute for real professional or clinical evaluation.
 - Added a machine-readable assurance model that keeps engineering regression, verified professional review, clinical effectiveness, and production readiness as non-substitutable evidence gates; automated success can no longer be summarized as clinical validation.
 - Published explicit allowed and prohibited claims. The current stage remains `research_prototype`: real professional ratings, prospective participant outcomes, adverse-event/dropout analysis, independent review, and production controls are still pending.
 - Removed authentication from the localized crisis page so emergency call, message, and official-source actions remain available even when a user cannot log in.
@@ -161,10 +167,12 @@ The behavioral suite is stored in `evaluations/behavior_cases.jsonl`. It checks 
 
 ```text
 src/psycho_agent/
+  assurance.py    non-substitutable engineering, professional, clinical, and deployment gates
   client_metrics.py explicit user-side experience, rejection, and exit signals
   clinical_evaluation.py blind clinician packets and inter-rater agreement
   credentials.py manual credential evidence and conflict-of-interest gates
   crisis_resources.py verified locale resources and actionable crisis cards
+  crisis_audit.py binary non-compensatory crisis control audit
   engine.py       conversation orchestrator
   generator.py    draft, review, and bounded rewrite workflow
   governance.py   clinical change approval, activation, and rollback
@@ -175,6 +183,7 @@ src/psycho_agent/
   rating_service.py verified human rating intake and finalization
   reviewer.py     deterministic and semantic response review
   safety.py       conservative first-pass risk triage
+  scope_guard.py  non-abandoning boundaries around unsupported clinical procedures
   simulated_users.py diverse synthetic evaluation profile loader
   state_update.py explicit emotion, preference, impact, and rupture signals
   strategy.py     phase-aware support strategy selection

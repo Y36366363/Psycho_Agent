@@ -48,6 +48,7 @@ class Strategy(StrEnum):
     REVIEW_PROGRESS = "review_progress"
     REPAIR_ALLIANCE = "repair_alliance"
     REAL_WORLD_BRIDGE = "real_world_bridge"
+    CLINICAL_SCOPE_BOUNDARY = "clinical_scope_boundary"
     SAFETY_FOLLOW_UP = "safety_follow_up"
     CRISIS_SUPPORT = "crisis_support"
 
@@ -125,6 +126,7 @@ class SessionState:
     recent_response_goals: list[str] = field(default_factory=list)
     recent_user_messages: list[str] = field(default_factory=list)
     recent_assistant_responses: list[str] = field(default_factory=list)
+    review_issue_history: list[list[str]] = field(default_factory=list)
 
 
 @dataclass(slots=True)

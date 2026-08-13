@@ -26,7 +26,7 @@ may fall under medical-device requirements; see the [MHRA digital mental-health 
 
 ## Current 2026-08-13 status
 
-- Engineering regression: passed, 100/100 unit and HTTP integration tests and 50/50 behavioral cases.
+- Engineering regression: passed, 108/108 unit and integration tests and 56/56 behavioral cases.
 - Verified professional review: pending; no real rating is claimed.
 - Clinical effectiveness: pending; no clinical validation is claimed.
 - Production readiness: pending; the Web server remains local-development software.

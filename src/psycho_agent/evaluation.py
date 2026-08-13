@@ -8,9 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from .engine import ConversationEngine
+from .crisis_audit import audit_crisis_plan
 from .models import SessionState
 from .reviewer import RuleBasedReviewer
 from .safety import assess_safety
+from .scope_guard import assess_clinical_scope
 from .state_update import update_session_state
 
 
@@ -45,6 +47,18 @@ def evaluate_case(case: dict[str, Any]) -> EvaluationResult:
     if component == "safety":
         assessment = assess_safety(case["message"])
         actual = {"level": assessment.level.value, "subject": assessment.subject.value}
+    elif component == "scope":
+        boundary = assess_clinical_scope(case["message"])
+        actual = {"scope": boundary.scope.value if boundary else None}
+    elif component == "crisis_audit":
+        plan = ConversationEngine().process(
+            SessionState(session_id=f"eval-{case['id']}"), case["message"]
+        )
+        report = audit_crisis_plan(plan)
+        actual = {
+            "status": report["status"],
+            "failed_critical_checks": report["failed_critical_checks"],
+        }
     elif component == "review":
         session = SessionState(session_id=f"eval-{case['id']}")
         if case.get("previous"):

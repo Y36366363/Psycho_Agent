@@ -46,6 +46,7 @@ class NaturalResponseGenerator:
         plan: TurnPlan,
     ) -> GeneratedResponse:
         if plan.fixed_response is not None:
+            session.review_issue_history.append([])
             self._remember(session, user_message, plan.fixed_response)
             return GeneratedResponse(text=plan.fixed_response, draft=plan.fixed_response)
 
@@ -80,6 +81,10 @@ class NaturalResponseGenerator:
         )
         if safety_fallback_applied:
             final_review = self.rule_reviewer.review(final, session, plan)
+        session.review_issue_history.append(
+            [issue.kind.value for issue in final_review.issues]
+        )
+        session.review_issue_history[:] = session.review_issue_history[-12:]
         self._remember(session, user_message, final)
         return GeneratedResponse(
             text=final,
@@ -109,6 +114,14 @@ class NaturalResponseGenerator:
                 "我不能确认这个判断。摄像头存在是可以观察到的事实；它是否意味着有人联合"
                 "监视或针对你，是目前还没有被核实的解释。你的不安是真实的，但不安本身"
                 "不能证明那个解释。我们可以先把已知事实、尚未确定的部分和它对你的影响分开。",
+                True,
+            )
+        if IssueKind.CLINICAL_OVERREACH in kinds:
+            return (
+                "我不能根据这段对话替你决定用药、调整剂量或执行需要专业监督的治疗。"
+                "这些决定需要有相应资质的专业人员结合你的病史、当前状态和后续观察。"
+                "如果你愿意，我可以帮你整理最近的变化、正在使用的药物和想向专业人员确认的问题，"
+                "但不会替你给出诊疗指令。",
                 True,
             )
         return response, False
