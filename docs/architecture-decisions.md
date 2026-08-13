@@ -109,3 +109,15 @@ Changes to safety, strategies, reviewer rules, crisis text, or therapeutic-sound
 **Status:** accepted
 
 Silence is not satisfaction. Felt understanding remains unknown until explicitly reported. Pressure, correction, action rejection, rejection reasons, exit intent, and exit reasons are independent client-side signals. Clinician evaluation removes even anonymous model aliases from rating packets and reports agreement per dimension using exact agreement and pairwise quadratic-weighted kappa; it does not average safety and warmth into one score.
+
+## ADR-019: Confidence claims require non-substitutable evidence gates
+
+**Status:** accepted
+
+Automated regression, verified professional review, clinical effectiveness, and production readiness are separate gates. Passing one cannot fill another. The repository publishes machine-readable allowed and prohibited claims, and remains a research prototype until prospective representative outcomes, adverse-event/dropout analysis, independent review, and deployment controls exist. This prevents test counts or model comparisons from being presented as clinical validation.
+
+## ADR-020: Crisis access must not depend on account access
+
+**Status:** accepted
+
+The localized crisis-action page is public and bypasses login, sessions, memory, and model generation. Authentication failure must not block emergency or crisis-support links. All personal memory operations remain authenticated and CSRF protected. Memory consent must be selectable and revocable per purpose in the user interface, not only in an internal API.

@@ -37,6 +37,11 @@ class PsychoWebApp:
                    ("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'")]
         if path == "/health":
             return self._respond(start_response, "200 OK", headers, "ok", content_type="text/plain")
+        if path == "/crisis":
+            query = parse_qs(environ.get("QUERY_STRING", ""))
+            locale = query.get("locale", ["zh-CN"])[0]
+            body = render_crisis_card_html(get_crisis_resource_card(locale))
+            return self._page(start_response, "200 OK", headers, "危机支持", body)
         if path == "/login":
             if method == "POST":
                 form = self._form(environ)
@@ -59,26 +64,41 @@ class PsychoWebApp:
                 self.auth.require_csrf(session, form.get("csrf", ""))
             except PermissionError:
                 return self._page(start_response, "403 Forbidden", headers, "请求被拒绝", "CSRF 校验失败。")
-            if path == "/memory/consent":
-                scopes = {MemoryScope(item) for item in form.get("scopes", "").split(",") if item}
-                self.memory.grant_consent(session.user_id, scopes, policy_version="2026-08-12")
-            elif path == "/memory/add":
-                self.memory.remember(session.user_id, MemoryScope(form["scope"]), form["value"])
-            elif path == "/memory/delete":
-                self.memory.delete_item(session.user_id, form.get("item_id", ""))
-            elif path == "/memory/delete-all":
-                self.memory.delete_all(session.user_id)
-            elif path == "/logout":
-                self.auth.logout(session.token)
-                headers.extend([("Set-Cookie", "session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0"), ("Location", "/login")])
-                return self._respond(start_response, "303 See Other", headers, "")
+            try:
+                if path == "/memory/consent":
+                    scopes = {
+                        scope for scope in MemoryScope if form.get(f"scope_{scope.value}") == "1"
+                    }
+                    self.memory.grant_consent(
+                        session.user_id, scopes, policy_version="2026-08-13"
+                    )
+                elif path == "/memory/revoke":
+                    self.memory.revoke_scope(session.user_id, MemoryScope(form["scope"]))
+                elif path == "/memory/add":
+                    self.memory.remember(
+                        session.user_id, MemoryScope(form["scope"]), form["value"]
+                    )
+                elif path == "/memory/delete":
+                    self.memory.delete_item(session.user_id, form.get("item_id", ""))
+                elif path == "/memory/delete-all":
+                    self.memory.delete_all(session.user_id)
+                elif path == "/logout":
+                    self.auth.logout(session.token)
+                    headers.extend([("Set-Cookie", "session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0"), ("Location", "/login")])
+                    return self._respond(start_response, "303 See Other", headers, "")
+                else:
+                    return self._page(start_response, "404 Not Found", headers, "未找到", "未知操作。", session)
+            except (KeyError, ValueError, PermissionError) as exc:
+                return self._page(
+                    start_response,
+                    "400 Bad Request",
+                    headers,
+                    "无法完成操作",
+                    f"<p>{html.escape(str(exc))}</p>",
+                    session,
+                )
             headers.append(("Location", "/memory"))
             return self._respond(start_response, "303 See Other", headers, "")
-        if path == "/crisis":
-            query = parse_qs(environ.get("QUERY_STRING", ""))
-            locale = query.get("locale", ["zh-CN"])[0]
-            body = render_crisis_card_html(get_crisis_resource_card(locale))
-            return self._page(start_response, "200 OK", headers, "危机支持", body, session)
         if path == "/memory/export":
             return self._respond(start_response, "200 OK", headers,
                                  self.memory.export(session.user_id), content_type="application/json; charset=utf-8")
@@ -112,8 +132,19 @@ class PsychoWebApp:
             f"<form method=post action='/memory/delete' style='display:inline'><input type=hidden name=csrf value='{session.csrf_token}'><input type=hidden name=item_id value='{item['item_id']}'><button class=danger>删除</button></form></li>"
             for item in self.memory.view(session.user_id)
         ) or "<li class=muted>暂无已保存记忆</li>"
-        scopes = ",".join(scope.value for scope in MemoryScope)
-        return f"""<section class=panel><h2>明确同意</h2><p>此演示一次启用四类最小化记忆；撤销/逐范围控制可由存储 API 执行。</p><form method=post action='/memory/consent'><input type=hidden name=csrf value='{session.csrf_token}'><input type=hidden name=scopes value='{scopes}'><button>同意保存</button></form></section><section class=panel><h2>添加记忆</h2><form method=post action='/memory/add'><input type=hidden name=csrf value='{session.csrf_token}'><select name=scope>{''.join(f'<option>{s.value}</option>' for s in MemoryScope)}</select><input required name=value maxlength=500><button>保存</button></form><h3>已保存</h3><ul>{items}</ul><p><a href='/memory/export'>导出 JSON</a></p><form method=post action='/memory/delete-all'><input type=hidden name=csrf value='{session.csrf_token}'><button class=danger>撤销同意并全部删除</button></form></section>"""
+        active = self.memory.consent_scopes(session.user_id)
+        choices = "".join(
+            f"<label><input type=checkbox name='scope_{scope.value}' value=1 "
+            f"{'checked' if scope in active else ''}> {scope.value}</label><br>"
+            for scope in MemoryScope
+        )
+        revocations = "".join(
+            f"<form method=post action='/memory/revoke'><input type=hidden name=csrf "
+            f"value='{session.csrf_token}'><input type=hidden name=scope value='{scope.value}'>"
+            f"<button class=danger>撤销 {scope.value} 并删除该类记忆</button></form>"
+            for scope in sorted(active, key=lambda item: item.value)
+        ) or "<p class=muted>当前未启用长期记忆。</p>"
+        return f"""<section class=panel><h2>逐范围明确同意</h2><p>只勾选你希望长期保存的类别；未勾选不会保存。新增勾选不会自动撤销既有类别，请使用下方撤销按钮。</p><form method=post action='/memory/consent'><input type=hidden name=csrf value='{session.csrf_token}'>{choices}<button>确认所选同意</button></form><h3>当前同意与撤销</h3>{revocations}</section><section class=panel><h2>添加记忆</h2><form method=post action='/memory/add'><input type=hidden name=csrf value='{session.csrf_token}'><select name=scope>{''.join(f'<option>{s.value}</option>' for s in MemoryScope)}</select><input required name=value maxlength=500><button>保存</button></form><h3>已保存</h3><ul>{items}</ul><p><a href='/memory/export'>导出 JSON</a></p><form method=post action='/memory/delete-all'><input type=hidden name=csrf value='{session.csrf_token}'><button class=danger>撤销同意并全部删除</button></form></section>"""
 
     @staticmethod
     def _login(error: str = "") -> str:

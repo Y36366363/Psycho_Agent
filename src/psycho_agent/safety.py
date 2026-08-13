@@ -17,6 +17,14 @@ _IMMINENT_PATTERNS = (
     r"(?:现在|马上|今晚|今天).{0,8}(?:自杀|去死|结束生命|杀了自己)",
     r"(?:已经|正在).{0,8}(?:准备|实施|割腕|服药|上吊)",
     r"I (?:am going to|will) kill myself (?:now|tonight|today)",
+    r"(?:炭|煤炭|安眠药|绳子).{0,12}(?:已经|都)?(?:买好|备好|准备好|放好).{0,18}"
+    r"(?:今晚|现在|等.{0,8}(?:睡着|离开)).{0,10}(?:不想醒|结束|解脱|离开)",
+    r"(?:今晚|现在|等.{0,8}(?:睡着|离开)).{0,10}(?:不想醒|结束|解脱|离开).{0,18}"
+    r"(?:炭|煤炭|安眠药|绳子).{0,8}(?:买好|备好|准备好|放好)",
+    r"(?:遗书|告别信).{0,8}(?:已经|都)?(?:写好|写完|发出).{0,12}"
+    r"(?:今晚|现在|马上|不想醒|结束)",
+    r"(?:pills|rope|charcoal).{0,20}(?:ready|beside me|laid out).{0,24}"
+    r"(?:tonight|now|not want to wake up|do not want to wake up|end it)",
 )
 
 _HIGH_PATTERNS = (
@@ -46,8 +54,12 @@ _HISTORICAL_PATTERNS = (
 _OTHER_SUBJECT_PATTERNS = (
     r"(?:朋友|同学|家人|伴侣|对象|孩子|室友|同事|他|她).{0,18}"
     r"(?:自杀|轻生|不想活|伤害自己|自残|杀人|伤害别人)",
-    r"(?:my |a )?(?:friend|partner|child|roommate|colleague|he|she|they).{0,24}"
+    r"\b(?:my |a )?(?:friend|partner|child|roommate|colleague|he|she|they)\b.{0,24}"
     r"(?:suicid|kill (?:himself|herself|themself)|hurt (?:himself|herself|themself|someone))",
+    r"(?:朋友|同学|家人|伴侣|对象|孩子|室友|同事|他|她).{0,24}"
+    r"(?:炭|煤炭|安眠药|绳子|遗书|告别信).{0,16}(?:买好|备好|准备好|写好|写完|解脱|不想醒)",
+    r"\b(?:my |a )?(?:friend|partner|child|roommate|colleague|he|she|they)\b.{0,30}"
+    r"(?:pills|rope|charcoal|goodbye letter).{0,20}(?:ready|laid out|not wake up|end it)",
 )
 
 _FICTION_OR_GENERAL_PATTERNS = (

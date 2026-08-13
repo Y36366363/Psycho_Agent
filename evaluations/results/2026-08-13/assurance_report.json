@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-13T10:58:28.745996+00:00",
+  "overall_stage": "research_prototype",
+  "gates": [
+    {
+      "gate": "engineering_regression",
+      "status": "passed",
+      "evidence": [
+        "unit:100/100",
+        "behavior:50/50"
+      ],
+      "missing": []
+    },
+    {
+      "gate": "verified_professional_review",
+      "status": "pending",
+      "evidence": [],
+      "missing": [
+        "at least two verified professionals must finalize blind ratings"
+      ]
+    },
+    {
+      "gate": "clinical_effectiveness",
+      "status": "pending",
+      "evidence": [],
+      "missing": [
+        "prospectively defined clinical protocol",
+        "representative participant outcomes",
+        "adverse-event and dropout analysis",
+        "independent clinical/statistical review"
+      ]
+    },
+    {
+      "gate": "production_readiness",
+      "status": "pending",
+      "evidence": [],
+      "missing": [
+        "encrypted_backups_tested",
+        "incident_response_exercised",
+        "independent_penetration_test",
+        "jurisdiction_review_complete",
+        "managed_key_service",
+        "public_tls"
+      ]
+    }
+  ],
+  "allowed_claims": [
+    "research prototype",
+    "automated engineering regression passed"
+  ],
+  "prohibited_claims": [
+    "clinically validated",
+    "proven safe or effective",
+    "equivalent to a psychologist or therapist",
+    "production ready"
+  ],
+  "interpretation": "Passing automated tests supports only the tested engineering behaviors. It does not establish clinical effectiveness, general safety, or production readiness."
+}

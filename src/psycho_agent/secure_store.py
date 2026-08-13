@@ -113,6 +113,13 @@ class EncryptedMemoryStore:
             self._audit(db, owner_id, "memory_created", scope.value, item_id)
         return item_id
 
+    def consent_scopes(self, owner_id: str) -> set[MemoryScope]:
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT scope FROM consents WHERE owner_id=? ORDER BY scope", (owner_id,)
+            ).fetchall()
+        return {MemoryScope(row[0]) for row in rows}
+
     def view(self, owner_id: str) -> list[dict[str, str]]:
         self.purge_expired()
         with self._connect() as db:

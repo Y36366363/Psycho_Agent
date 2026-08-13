@@ -1,3 +1,12 @@
+# Updates 8/13/2026
+
+- Added a machine-readable assurance model that keeps engineering regression, verified professional review, clinical effectiveness, and production readiness as non-substitutable evidence gates; automated success can no longer be summarized as clinical validation.
+- Published explicit allowed and prohibited claims. The current stage remains `research_prototype`: real professional ratings, prospective participant outcomes, adverse-event/dropout analysis, independent review, and production controls are still pending.
+- Removed authentication from the localized crisis page so emergency call, message, and official-source actions remain available even when a user cannot log in.
+- Replaced the Web prototype's all-scopes memory consent with real per-purpose selection, visible active scopes, and direct per-scope revocation with linked deletion; malformed scope requests now return bounded `400` responses.
+- Expanded crisis triage for indirect preparatory language involving means, timing, goodbye letters, and “not waking up,” with Chinese/English and self/other contrast tests while preserving household-item negative controls.
+- Expanded the suite to 100 passing unit and HTTP integration tests and 50/50 offline behavioral cases. See the [assurance model](docs/assurance-model.md), [machine-readable assurance report](evaluations/results/2026-08-13/assurance_report.json), and [test report](evaluations/results/2026-08-13/test_report.md).
+
 # Updates 8/12/2026
 
 - Replaced the optional in-process-only memory path with an authenticated SQLite option that encrypts every saved value using AES-256-GCM, binds ciphertext to its owner and purpose, and preserves consent, view/export, retention, scope revocation, and deletion controls.
