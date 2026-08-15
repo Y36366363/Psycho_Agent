@@ -94,6 +94,48 @@ class LiveComparisonTests(unittest.TestCase):
             self.assertEqual(len(retried_data["retry_history"]), 1)
             self.assertNotIn('"one"', blind_path.read_text(encoding="utf-8"))
 
+    def test_repeated_comparison_tracks_runs_and_distribution_metrics(self) -> None:
+        models = {name: FakeModel(name) for name in ("one", "two")}
+        scenarios = {
+            "version": "test",
+            "scenarios": [
+                {"id": "case", "title": "Case", "intent": "Test", "turns": ["第一轮。"]}
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            blind_path, _ = run_comparison(
+                models,
+                scenarios,
+                directory,
+                rng=random.Random(7),
+                repetitions=2,
+            )
+            data = json.loads(blind_path.read_text(encoding="utf-8"))
+            self.assertEqual(data["repetitions"], 2)
+            for model_data in data["models"].values():
+                self.assertEqual(
+                    [scenario["replicate"] for scenario in model_data["scenarios"]],
+                    [1, 2],
+                )
+            for score in automatic_scores(blind_path).values():
+                self.assertEqual(score["scenario_runs"], 2)
+                self.assertEqual(score["completed_scenario_runs"], 2)
+                self.assertEqual(score["completion_rate"], 1.0)
+                self.assertEqual(score["final_issue_turn_rate"], 0.0)
+                self.assertIn("median_success_latency_seconds", score)
+
+    def test_comparison_rejects_unbounded_repetitions(self) -> None:
+        models = {name: FakeModel(name) for name in ("one", "two")}
+        scenarios = {
+            "version": "test",
+            "scenarios": [
+                {"id": "case", "title": "Case", "intent": "Test", "turns": ["第一轮。"]}
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(ValueError):
+                run_comparison(models, scenarios, directory, repetitions=11)
+
 
 if __name__ == "__main__":
     unittest.main()

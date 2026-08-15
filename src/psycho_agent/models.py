@@ -75,6 +75,7 @@ class UserState:
     advice_paused: bool = False
     tiny_step_requested: bool = False
     exclusive_ai_reliance: bool = False
+    turn_constraints: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)

@@ -23,16 +23,18 @@ _GOALS = {
 
 
 def _candidate_strategies(session: SessionState) -> list[Strategy]:
+    # A direct request made on the current turn is stronger evidence of the user's
+    # present goal than a repair signal carried over from the preceding turn.
+    if session.user.exclusive_ai_reliance:
+        return [Strategy.REAL_WORLD_BRIDGE]
+    if session.user.tiny_step_requested:
+        return [Strategy.TINY_NEXT_STEP]
     if (
         session.alliance.rupture_count
         and session.alliance.last_rupture_turn is not None
         and session.turn_count - session.alliance.last_rupture_turn <= 1
     ):
         return [Strategy.REPAIR_ALLIANCE]
-    if session.user.exclusive_ai_reliance:
-        return [Strategy.REAL_WORLD_BRIDGE]
-    if session.user.tiny_step_requested:
-        return [Strategy.TINY_NEXT_STEP]
     if session.user.advice_paused:
         return [Strategy.REFLECT]
     if (session.user.emotion_intensity or 0) >= 8:

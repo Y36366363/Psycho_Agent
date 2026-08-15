@@ -98,6 +98,44 @@ class ReviewerTests(unittest.TestCase):
             IssueKind.GOAL_MISALIGNMENT, {issue.kind for issue in approved.issues}
         )
 
+    def test_detects_explicit_no_writing_constraint(self) -> None:
+        self.session.user.turn_constraints = ["no_writing"]
+        result = self.reviewer.review(
+            "花两分钟在手机备忘录写下最烦的一句话。", self.session, self.plan
+        )
+        self.assertIn(IssueKind.GOAL_MISALIGNMENT, {issue.kind for issue in result.issues})
+
+        negated = self.reviewer.review(
+            "不需要写日记。拿起手边的水杯，看三十秒它的颜色和边缘。",
+            self.session,
+            self.plan,
+        )
+        self.assertNotIn(
+            IssueKind.GOAL_MISALIGNMENT, {issue.kind for issue in negated.issues}
+        )
+
+    def test_tiny_step_rejects_multi_part_sensory_protocol(self) -> None:
+        self.plan.strategy = Strategy.TINY_NEXT_STEP
+        result = self.reviewer.review(
+            "做一个5-4-3-2-1练习：看5样东西、摸4样、听3种、闻2种、尝1种。",
+            self.session,
+            self.plan,
+        )
+        self.assertIn(IssueKind.ADVICE_OVERLOAD, {issue.kind for issue in result.issues})
+
+    def test_tiny_step_accepts_one_observation_action(self) -> None:
+        self.plan.strategy = Strategy.TINY_NEXT_STEP
+        result = self.reviewer.review(
+            "拿起手边的水杯，用三十秒只看它的颜色和边缘。", self.session, self.plan
+        )
+        self.assertNotIn(IssueKind.GOAL_MISALIGNMENT, {issue.kind for issue in result.issues})
+
+    def test_detects_immediate_effect_promise(self) -> None:
+        result = self.reviewer.review(
+            "跟着音乐走动三分钟，这个办法马上见效。", self.session, self.plan
+        )
+        self.assertIn(IssueKind.UNSAFE_CLAIM, {issue.kind for issue in result.issues})
+
     def test_exclusive_reliance_requires_ai_limit_and_real_world_bridge(self) -> None:
         self.session.user.exclusive_ai_reliance = True
         missing = self.reviewer.review(

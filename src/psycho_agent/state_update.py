@@ -40,12 +40,15 @@ _RUPTURE_PATTERNS = (
     r"你(?:又|一直|总是)在重复",
     r"别再(?:说|问|建议)",
     r"这(?:回答|说法).{0,6}(?:没用|很机械|像模板)",
+    r"你.{0,5}(?:套模板|像模板|太模板)",
 )
 
 _PAUSE_ADVICE_PATTERNS = (
     r"(?:先|现在|这会儿).{0,5}(?:别|不要|不想).{0,5}(?:方法|办法|建议|分析)",
     r"我还没(?:有)?说完",
     r"(?:先|只想).{0,5}(?:听我说|倾诉)",
+    r"(?:先|现在).{0,8}(?:别|不要).{0,8}(?:问|练习|呼吸)",
+    r"(?:只是|就是)?想.{0,12}(?:说完|讲完)",
 )
 
 _RESUME_ADVICE_PATTERNS = (
@@ -57,7 +60,18 @@ _RESUME_ADVICE_PATTERNS = (
 _TINY_STEP_PATTERNS = (
     r"(?:最小|很小|最简单).{0,5}(?:一步|下一步|行动)",
     r"今天能做的.{0,6}(?:一步|事情|行动)",
+    r"(?:给我|来个|想要).{0,24}(?:小|简单|轻量).{0,5}(?:办法|方法|练习|动作)",
+    r"(?:只有|只能拿出).{0,8}(?:分钟|片刻).{0,20}(?:办法|方法|练习)",
 )
+
+_TURN_CONSTRAINT_PATTERNS = {
+    "no_questions": (r"(?:别|不要|不想).{0,5}(?:问|问题)",),
+    "no_breathing": (
+        r"(?:别|不要|不想).{0,8}(?:教|做|练).{0,5}(?:呼吸|吸气|吐气)",
+        r"(?:别|不要|不想).{0,5}(?:呼吸法|呼吸练习)",
+    ),
+    "no_writing": (r"(?:别|不要|不想).{0,8}(?:写|记录|日记|纸笔)",),
+}
 
 _EXCLUSIVE_AI_PATTERNS = (
     r"只有你.{0,8}(?:愿意听|懂我|能理解|可以说)",
@@ -77,6 +91,11 @@ def update_session_state(session: SessionState, message: str) -> None:
     # These two signals describe the current turn rather than a durable preference.
     session.user.tiny_step_requested = False
     session.user.exclusive_ai_reliance = False
+    session.user.turn_constraints = [
+        constraint
+        for constraint, patterns in _TURN_CONSTRAINT_PATTERNS.items()
+        if any(re.search(pattern, text) for pattern in patterns)
+    ]
 
     intensity_matches = re.findall(r"(?<!\d)(10|[0-9])\s*(?:分|/\s*10)(?!\d)", text)
     if intensity_matches:

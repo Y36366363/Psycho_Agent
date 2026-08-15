@@ -1,3 +1,12 @@
+# Updates 8/15/2026
+
+- Added repeated provider-blind comparison (`--repetitions 1–10`) with complete-scenario replicate IDs, bounded replicate-aware retries, completion rates, final-issue rates, rewrite rates, and median/max successful latency.
+- Ran OpenAI `gpt-5-mini`, DeepSeek `deepseek-chat`, and Gemini `gemini-3.5-flash` on the same three synthetic multi-turn cases twice: all completed 14/14 turns per provider; blinded exact adherence was 5/6 for DeepSeek, 4/6 for Gemini, and 2/6 for OpenAI in this small developer audit.
+- Converted real cross-model failures into controls for “套模板/先别问”, five-minute small-action requests, explicit no-writing/no-breathing/no-question constraints, multi-part sensory protocols, current-turn goal precedence, effect promises, and reviewer false-positive negative controls.
+- Re-ran the live cases after the first changes and a final focused action regression. Gemini and DeepSeek met the final action constraint; OpenAI returned an immediate-effect promise now blocked by the reviewer. These samples show engineering feasibility, not therapeutic effectiveness or a stable provider ranking.
+- Prepared an 18-session provider-free professional rating packet with replicate identities retained only in its ignored key; no professional ratings are claimed or fabricated.
+- Expanded the suite to 123 passing unit and integration tests, 64/64 behavioral cases, and 14/14 routing variants. See the [August 15 feasibility report](evaluations/results/2026-08-15/feasibility_report.md), [test report](evaluations/results/2026-08-15/test_report.md), and [assurance report](evaluations/results/2026-08-15/assurance_report.json).
+
 # Updates 8/14/2026
 
 - Fixed a multi-turn crisis continuity defect: unresolved second and later crisis turns now retain locale-verified call/message actions, AI-limit language, safety questions, and the same non-compensatory crisis audit as the first turn.
@@ -141,11 +150,11 @@ python -m psycho_agent.smoke_test openai deepseek gemini
 Run the same synthetic multi-turn scenarios through all configured providers. Provider identities are randomized into aliases, with the key stored in an ignored file:
 
 ```bash
-python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD
+python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD --repetitions 2
 python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD --retry-failures
 ```
 
-The retry command reruns the complete scenario containing a failed turn so later responses retain valid conversational context. Do not open `provider_key.json` until qualitative scores have been written.
+Each repetition starts a fresh complete conversation. The retry command reruns the exact scenario/repetition containing a failed turn so later responses retain valid conversational context. Do not open `provider_key.json` until qualitative scores have been written.
 
 Run tests:
 

@@ -6,6 +6,7 @@ import argparse
 import json
 import random
 import secrets
+import statistics
 import time
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -78,10 +79,16 @@ def _aliases(
     return dict(zip(provider_names, labels, strict=True))
 
 
-def _run_scenario(alias: str, model: TextModel, scenario: dict[str, Any]) -> dict[str, Any]:
+def _run_scenario(
+    alias: str,
+    model: TextModel,
+    scenario: dict[str, Any],
+    *,
+    replicate: int = 1,
+) -> dict[str, Any]:
     """Run a complete scenario so retries retain their conversational context."""
     engine = ConversationEngine()
-    session = SessionState(session_id=f"live-{alias}-{scenario['id']}")
+    session = SessionState(session_id=f"live-{alias}-{scenario['id']}-r{replicate}")
     generator = NaturalResponseGenerator(model, enable_model_review=False)
     records: list[TurnRecord] = []
     for turn_number, user_message in enumerate(scenario["turns"], start=1):
@@ -126,6 +133,7 @@ def _run_scenario(alias: str, model: TextModel, scenario: dict[str, Any]) -> dic
         records.append(record)
     return {
         "id": scenario["id"],
+        "replicate": replicate,
         "title": scenario["title"],
         "intent": scenario["intent"],
         "turns": [asdict(record) for record in records],
@@ -138,10 +146,13 @@ def run_comparison(
     output_dir: str | Path,
     *,
     rng: random.Random | secrets.SystemRandom | None = None,
+    repetitions: int = 1,
 ) -> tuple[Path, Path]:
     """Generate outputs and seal provider identities in a separate ignored file."""
     if len(models) < 2:
         raise ValueError("Blind comparison requires at least two providers.")
+    if not 1 <= repetitions <= 10:
+        raise ValueError("Repetitions must be between 1 and 10.")
     rng = rng or secrets.SystemRandom()
     mapping = _aliases(list(models), rng)
     destination = Path(output_dir)
@@ -151,7 +162,9 @@ def run_comparison(
     for provider_name, model in models.items():
         alias = mapping[provider_name]
         scenario_results = [
-            _run_scenario(alias, model, scenario) for scenario in scenario_data["scenarios"]
+            _run_scenario(alias, model, scenario, replicate=replicate)
+            for replicate in range(1, repetitions + 1)
+            for scenario in scenario_data["scenarios"]
         ]
         by_alias[alias] = {"scenarios": scenario_results}
 
@@ -159,6 +172,7 @@ def run_comparison(
     blind_data = {
         "run_at": datetime.now(UTC).isoformat(),
         "scenario_version": scenario_data.get("version"),
+        "repetitions": repetitions,
         "rubric_version": load_rubric().get("version"),
         "review_mode": (
             "deterministic rules with at most one rewrite; semantic model review disabled"
@@ -199,25 +213,29 @@ def retry_failed_scenarios(
     retried: dict[str, list[str]] = {}
 
     for alias, model_data in blind_data["models"].items():
-        failed_ids = [
-            scenario["id"]
+        failed_runs = [
+            (scenario["id"], scenario.get("replicate", 1))
             for scenario in model_data["scenarios"]
             if any(turn.get("error") for turn in scenario["turns"])
         ]
-        if not failed_ids:
+        if not failed_runs:
             continue
         provider_name = key_data["mapping"][alias]["provider"]
         if provider_name not in models:
             raise ValueError(f"No configured model for the sealed provider behind {alias}.")
-        retried[alias] = failed_ids
+        retried[alias] = [f"{scenario_id}:r{replicate}" for scenario_id, replicate in failed_runs]
         replacements = {
-            scenario_id: _run_scenario(
-                alias, models[provider_name], scenarios_by_id[scenario_id]
+            (scenario_id, replicate): _run_scenario(
+                alias,
+                models[provider_name],
+                scenarios_by_id[scenario_id],
+                replicate=replicate,
             )
-            for scenario_id in failed_ids
+            for scenario_id, replicate in failed_runs
         }
         model_data["scenarios"] = [
-            replacements.get(scenario["id"], scenario) for scenario in model_data["scenarios"]
+            replacements.get((scenario["id"], scenario.get("replicate", 1)), scenario)
+            for scenario in model_data["scenarios"]
         ]
 
     if retried:
@@ -245,19 +263,36 @@ def automatic_scores(blind_path: str | Path) -> dict[str, dict[str, float | int]
     for alias, model_data in data["models"].items():
         turns = [turn for scenario in model_data["scenarios"] for turn in scenario["turns"]]
         successful = [turn for turn in turns if turn["response"] is not None]
+        latencies = [turn["latency_seconds"] for turn in successful]
+        completed_runs = sum(
+            all(turn.get("response") is not None for turn in scenario["turns"])
+            for scenario in model_data["scenarios"]
+        )
+        final_issue_turns = sum(bool(turn["final_issues"]) for turn in successful)
         scores[alias] = {
+            "scenario_runs": len(model_data["scenarios"]),
+            "completed_scenario_runs": completed_runs,
             "turns": len(turns),
             "successful_turns": len(successful),
             "failed_turns": len(turns) - len(successful),
+            "completion_rate": round(len(successful) / max(1, len(turns)), 3),
             "draft_issue_count": sum(len(turn["draft_issues"]) for turn in turns),
             "final_issue_count": sum(len(turn["final_issues"]) for turn in turns),
+            "final_issue_turn_rate": round(final_issue_turns / max(1, len(successful)), 3),
             "rewrite_count": sum(bool(turn["rewritten"]) for turn in turns),
+            "rewrite_rate": round(
+                sum(bool(turn["rewritten"]) for turn in turns) / max(1, len(turns)), 3
+            ),
             "safety_fallback_count": sum(
                 bool(turn.get("safety_fallback_applied")) for turn in turns
             ),
             "average_latency_seconds": round(
                 sum(turn["latency_seconds"] for turn in turns) / len(turns), 3
             ),
+            "median_success_latency_seconds": round(statistics.median(latencies), 3)
+            if latencies
+            else 0.0,
+            "max_success_latency_seconds": round(max(latencies), 3) if latencies else 0.0,
             "average_response_characters": round(
                 sum(len(turn["response"] or "") for turn in successful) / max(1, len(successful))
             ),
@@ -269,6 +304,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run a blind live model comparison")
     parser.add_argument("--scenarios", default=str(DEFAULT_SCENARIOS))
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument(
+        "--repetitions",
+        type=int,
+        default=1,
+        help="Run each complete scenario 1-10 times to expose sampling variability",
+    )
     parser.add_argument(
         "--retry-failures",
         action="store_true",
@@ -295,7 +336,12 @@ def main() -> None:
         )
         print(f"Retried complete scenarios: {retried_count}")
     else:
-        blind_path, _ = run_comparison(models, scenario_data, args.output_dir)
+        blind_path, _ = run_comparison(
+            models,
+            scenario_data,
+            args.output_dir,
+            repetitions=args.repetitions,
+        )
     scores = automatic_scores(blind_path)
     score_path = Path(args.output_dir) / "automatic_scores.json"
     score_path.write_text(json.dumps(scores, ensure_ascii=False, indent=2), encoding="utf-8")

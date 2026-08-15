@@ -82,6 +82,7 @@ def evaluate_case(case: dict[str, Any]) -> EvaluationResult:
             "advice_paused": session.user.advice_paused,
             "tiny_step_requested": session.user.tiny_step_requested,
             "exclusive_ai_reliance": session.user.exclusive_ai_reliance,
+            "turn_constraints": session.user.turn_constraints,
             "felt_understood": session.client_feedback.felt_understood,
             "pressure_reported": session.client_feedback.pressure_reported,
             "action_rejected": session.client_feedback.action_rejected,

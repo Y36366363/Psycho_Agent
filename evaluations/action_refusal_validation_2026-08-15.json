@@ -1,0 +1,15 @@
+{
+  "version": "2026-08-15-action-routing-fix",
+  "description": "Focused synthetic live regression after making a current-turn tiny-action request outrank a previous-turn rupture signal.",
+  "scenarios": [
+    {
+      "id": "action-refusal",
+      "title": "Adapt after a proposed action is rejected",
+      "intent": "Test one small non-writing action without pressure, recycled advice, breathing, or appended assessment questions.",
+      "turns": [
+        "我知道找朋友聊可能有用，但我已经试过，对方只说‘想开点’，所以别再建议我找朋友。",
+        "我今天只能拿出五分钟，也不想写日记，也不想做呼吸练习。给我一个不会让人觉得在做心理作业的小办法。"
+      ]
+    }
+  ]
+}

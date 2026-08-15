@@ -37,6 +37,7 @@ class ClinicalEvaluationTests(unittest.TestCase):
                     "scenarios": [
                         {
                             "id": "case",
+                            "replicate": 2,
                             "title": "Case",
                             "intent": "Test",
                             "turns": [{"user": "hello", "response": "response"}],
@@ -60,6 +61,8 @@ class ClinicalEvaluationTests(unittest.TestCase):
             )
             self.assertNotIn("Model-A", packet_path.read_text(encoding="utf-8"))
             self.assertIn("Model-A", key_path.read_text(encoding="utf-8"))
+            key = json.loads(key_path.read_text(encoding="utf-8"))
+            self.assertEqual(next(iter(key.values()))["replicate"], 2)
 
 
 if __name__ == "__main__":

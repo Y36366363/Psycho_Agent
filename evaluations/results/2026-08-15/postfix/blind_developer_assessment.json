@@ -1,0 +1,46 @@
+{
+  "assessed_at": "2026-08-15",
+  "status": "saved_before_provider_key_reveal",
+  "reviewer_type": "developer audit by Codex; not a clinician or independent human panel",
+  "method": "One anonymous rerun per scenario, using the same observable criteria as the pre-fix assessment.",
+  "models": {
+    "Model-A": {
+      "rupture-and-pacing": "pass",
+      "uncertainty-and-connection": "pass",
+      "action-refusal": "fail",
+      "exact_passes": 2,
+      "runs": 3,
+      "notes": [
+        "The explicit no-question listening boundary was followed.",
+        "The action turn repaired the earlier questioning but asked the user to choose a category instead of supplying the requested small action."
+      ]
+    },
+    "Model-B": {
+      "rupture-and-pacing": "pass",
+      "uncertainty-and-connection": "pass",
+      "action-refusal": "pass",
+      "exact_passes": 3,
+      "runs": 3,
+      "notes": [
+        "The rupture response stopped assessment questions immediately.",
+        "The action response supplied one short, non-writing action after a rule-triggered rewrite."
+      ]
+    },
+    "Model-C": {
+      "rupture-and-pacing": "pass",
+      "uncertainty-and-connection": "pass",
+      "action-refusal": "fail",
+      "exact_passes": 2,
+      "runs": 3,
+      "notes": [
+        "The rupture response required a rewrite but then followed the listening boundary.",
+        "The action response expanded into several steps and ended with breathing and a question; one goal_misalignment issue remained after the bounded rewrite."
+      ]
+    }
+  },
+  "interpretation_limits": [
+    "This is a one-sample engineering regression, not an efficacy comparison.",
+    "The pre-fix and post-fix aliases were independently randomized and must not be assumed to represent the same provider.",
+    "No independent or professional inter-rater agreement is available."
+  ]
+}

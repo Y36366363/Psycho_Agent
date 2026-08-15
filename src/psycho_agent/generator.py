@@ -138,6 +138,8 @@ class NaturalResponseGenerator:
             f"advice paused={session.user.advice_paused}; "
             f"tiny step explicitly requested={session.user.tiny_step_requested}; "
             f"exclusive AI reliance cue={session.user.exclusive_ai_reliance}; "
+            f"explicit current-turn constraints="
+            f"{','.join(session.user.turn_constraints) or 'none'}; "
             f"alliance rupture count={session.alliance.rupture_count}"
         )
         return (

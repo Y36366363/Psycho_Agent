@@ -63,6 +63,7 @@ class RuleBasedReviewer:
         r"你(?:肯定|一定)会好起来",
         r"不需要找(?:医生|心理咨询师|专业人士)",
         r"我能保证",
+        r"(?:这个|这种|练习|方法|动作)?.{0,6}(?:马上见效|立刻有效|一定有效)",
     )
     _CLINICAL_OVERREACH = (
         r"你(?:应该|可以|需要).{0,12}"
@@ -87,6 +88,7 @@ class RuleBasedReviewer:
         r"(?:最小|下一|第一)步(?:可以|是|：|:)",
         r"(?:花|用)\s*\d+\s*(?:分钟|秒)",
         r"(?:写下|记下|发一条|打一个|关掉|放下|走到|喝一口|设置一个)",
+        r"(?:拿起|找一件|选一首|选择一首|放一首|播放一首|站起来|看一看|观察)",
     )
     _AI_LIMIT = (
         r"(?:我|这里|这个系统).{0,8}(?:是|只是).{0,4}(?:AI|人工智能)",
@@ -96,6 +98,18 @@ class RuleBasedReviewer:
         r"(?:现实|线下|身边).{0,10}(?:支持|帮助|人|连接)",
         r"(?:可信任的人|信任的人|家人|朋友|心理咨询师|专业人士|医生)",
     )
+    _CONSTRAINT_VIOLATIONS = {
+        "no_questions": (r"[？?]", "Do not ask a question on this turn."),
+        "no_breathing": (
+            r"(?:做|试|开始|来).{0,5}(?:深呼吸|慢呼吸|呼吸练习)|"
+            r"(?:深呼吸|慢呼吸|吸气|呼气|吐气).{0,5}(?:\d|两次|几次|一下)",
+            "Do not suggest a breathing exercise the user explicitly rejected.",
+        ),
+        "no_writing": (
+            r"(?:写下|记下|记录下)|(?:用|打开|找).{0,8}(?:备忘录|纸笔|废纸)",
+            "Do not suggest writing or recording when the user explicitly rejected it.",
+        ),
+    }
 
     def review(self, draft: str, session: SessionState, plan: TurnPlan) -> ReviewResult:
         issues: list[ReviewIssue] = []
@@ -166,6 +180,17 @@ class RuleBasedReviewer:
                 )
             )
 
+        for constraint in session.user.turn_constraints:
+            violation = self._CONSTRAINT_VIOLATIONS.get(constraint)
+            if violation and re.search(violation[0], draft, re.IGNORECASE):
+                issues.append(
+                    ReviewIssue(
+                        IssueKind.GOAL_MISALIGNMENT,
+                        f"The reply violates the user's explicit turn constraint: {constraint}.",
+                        violation[1],
+                    )
+                )
+
         if plan.strategy is Strategy.TINY_NEXT_STEP and not any(
             re.search(pattern, draft, re.IGNORECASE) for pattern in self._CONCRETE_ACTION
         ):
@@ -174,6 +199,20 @@ class RuleBasedReviewer:
                     IssueKind.GOAL_MISALIGNMENT,
                     "The user requested a small next step, but no concrete action was supplied.",
                     "Give one low-effort action directly instead of continuing assessment.",
+                )
+            )
+
+        if plan.strategy is Strategy.TINY_NEXT_STEP and re.search(
+            r"(?:5\s*[-–—]\s*4\s*[-–—]\s*3\s*[-–—]\s*2\s*[-–—]\s*1|"
+            r"5\s*样.{0,40}4\s*样.{0,40}3\s*(?:种|样).{0,40}2\s*(?:种|样).{0,40}1\s*(?:种|样))",
+            draft,
+            re.DOTALL,
+        ):
+            issues.append(
+                ReviewIssue(
+                    IssueKind.ADVICE_OVERLOAD,
+                    "The requested tiny step expanded into a multi-part sensory protocol.",
+                    "Keep one action with one attentional target; remove the multi-part sequence.",
                 )
             )
 

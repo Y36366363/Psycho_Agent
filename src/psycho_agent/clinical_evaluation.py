@@ -38,10 +38,14 @@ def create_blind_rating_packet(
     rng.shuffle(sessions)
 
     packet_items: list[dict[str, Any]] = []
-    key: dict[str, dict[str, str]] = {}
+    key: dict[str, dict[str, str | int]] = {}
     for index, (alias, scenario) in enumerate(sessions, start=1):
         packet_id = f"Session-{index:03d}"
-        key[packet_id] = {"alias": alias, "scenario_id": scenario["id"]}
+        key[packet_id] = {
+            "alias": alias,
+            "scenario_id": scenario["id"],
+            "replicate": scenario.get("replicate", 1),
+        }
         packet_items.append(
             {
                 "packet_item_id": packet_id,

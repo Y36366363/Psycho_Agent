@@ -63,6 +63,17 @@ class MultiTurnScenarioTests(unittest.TestCase):
         )
         self.assertEqual(action.strategy, Strategy.TINY_NEXT_STEP)
 
+    def test_explicit_tiny_step_overrides_previous_turn_rupture_repair(self) -> None:
+        self.engine.process(
+            self.session,
+            "我试过找朋友，对方只说想开点，所以别再建议我找朋友。",
+        )
+        action = self.engine.process(
+            self.session,
+            "我只有五分钟，也不想写日记。给我一个不像心理作业的小办法。",
+        )
+        self.assertEqual(action.strategy, Strategy.TINY_NEXT_STEP)
+
     def test_exclusive_reliance_interrupts_intake(self) -> None:
         plan = self.engine.process(
             self.session, "只有你愿意听我说，我不打算告诉现实里的人"

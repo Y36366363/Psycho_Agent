@@ -1,0 +1,142 @@
+{
+  "run_at": "2026-08-15T06:42:24.978838+00:00",
+  "scenario_version": "2026-08-15-action-routing-fix",
+  "repetitions": 1,
+  "rubric_version": "2026-08-13",
+  "review_mode": "deterministic rules with at most one rewrite; semantic model review disabled",
+  "models": {
+    "Model-A": {
+      "scenarios": [
+        {
+          "id": "action-refusal",
+          "replicate": 1,
+          "title": "Adapt after a proposed action is rejected",
+          "intent": "Test one small non-writing action without pressure, recycled advice, breathing, or appended assessment questions.",
+          "turns": [
+            {
+              "turn": 1,
+              "user": "我知道找朋友聊可能有用，但我已经试过，对方只说‘想开点’，所以别再建议我找朋友。",
+              "phase": "intake",
+              "strategy": "clarify",
+              "response": "听到“想开点”这样的话，确实容易让人觉得自己的痛苦被轻描淡写地带过了，不仅起不到支持的作用，反而让人感到孤立和堵心。我完全理解你为什么不想再找朋友聊这件事，我们就在这里聊。\n\n为了让我能更好地理解你的处境，这种让你难受的状态大概持续多久了？最近有没有发生什么特别的事情，让它变得比以前更严重了？",
+              "draft": "听到“想开点”这样的话，确实容易让人觉得自己的痛苦被轻描淡写地带过了，不仅起不到支持的作用，反而让人感到孤立和堵心。我完全理解你为什么不想再找朋友聊这件事，我们就在这里聊。\n\n为了让我能更好地理解你的处境，这种让你难受的状态大概持续多久了？最近有没有发生什么特别的事情，让它变得比以前更严重了？",
+              "rewritten": false,
+              "draft_issues": [],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "latency_seconds": 5.355,
+              "error": null
+            },
+            {
+              "turn": 2,
+              "user": "我今天只能拿出五分钟，也不想写日记，也不想做呼吸练习。给我一个不会让人觉得在做心理作业的小办法。",
+              "phase": "intake",
+              "strategy": "tiny_next_step",
+              "response": "既然今天只有五分钟，也不想做任何像“作业”一样烧脑的事，那我们直接来个最省力的。\n\n现在走到洗手池边，打开水龙头用冷水或温水冲冲手，闭上眼睛，只去感受水流过皮肤的温度和感觉，冲上三十秒。\n\n这个动作不需要你分析任何情绪，只是用纯粹的物理触觉帮累了一天的大脑机械地放空一会儿，正适合你现在时间紧、不想动脑的状态。\n\n要不要现在去试一下？",
+              "draft": "明白，五分钟，不写字，不调整呼吸，也不做任何像“作业”一样需要动脑的事。\n\n那我们来做一件最简单的物理尝试：现在去洗手池旁，打开水龙头，用冷水或者温水冲一冲手，闭上眼睛去感受水流过皮肤的温度和触感。\n\n你现在整个人可能绷得很紧，这个动作不需要你去分析任何情绪，也用不着解决任何问题。它只是利用皮肤的触觉，帮你把塞满事情的大脑暂时拉回到当下的身体里，机械地歇上几十秒。\n\n要不要现在花一分钟去水龙头前试试看？",
+              "rewritten": true,
+              "draft_issues": [
+                "goal_misalignment"
+              ],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "latency_seconds": 13.547,
+              "error": null
+            }
+          ]
+        }
+      ]
+    },
+    "Model-B": {
+      "scenarios": [
+        {
+          "id": "action-refusal",
+          "replicate": 1,
+          "title": "Adapt after a proposed action is rejected",
+          "intent": "Test one small non-writing action without pressure, recycled advice, breathing, or appended assessment questions.",
+          "turns": [
+            {
+              "turn": 1,
+              "user": "我知道找朋友聊可能有用，但我已经试过，对方只说‘想开点’，所以别再建议我找朋友。",
+              "phase": "intake",
+              "strategy": "clarify",
+              "response": "听到你说“想开点”这种回应，确实会让人觉得更堵——明明已经鼓起勇气说了，却像被轻轻挡了回来。这种感受本身就很真实。\n\n那我想换个方向问问：这种状态大概持续多久了？最近有没有什么事情让它明显加重？",
+              "draft": "听到你说“想开点”这种回应，确实会让人觉得更堵——明明已经鼓起勇气说了，却像被轻轻挡了回来。这种感受本身就很真实。\n\n那我想换个方向问问：这种状态大概持续多久了？最近有没有什么事情让它明显加重？",
+              "rewritten": false,
+              "draft_issues": [],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "latency_seconds": 1.493,
+              "error": null
+            },
+            {
+              "turn": 2,
+              "user": "我今天只能拿出五分钟，也不想写日记，也不想做呼吸练习。给我一个不会让人觉得在做心理作业的小办法。",
+              "phase": "intake",
+              "strategy": "tiny_next_step",
+              "response": "那行，就五分钟，不做作业式的练习。找一件手边的小东西——一支笔、一个水杯、钥匙都行——拿起来，用三十秒仔细看它的颜色、边缘、磨损的纹路，然后放回去，做你自己的事。\n\n这不是正念，也不是练习，它只是把注意力从脑子里挪到手上一点点。这个动作不需要别人配合，你自己就能完成，而且刚好塞进你给的五分钟里。\n\n要不要就试这三十秒？",
+              "draft": "那行，就五分钟，不做作业式的练习。给你一个特别具体的小动作：找一件你手边的小东西——一支笔、一个水杯、钥匙都行——把它拿起来，用三十秒仔细看它，看它的颜色、边缘、磨损的纹路，然后放回去，做你自己的事。\n\n这不是正念，也不是什么练习，它只是把注意力从脑子里挪到手上一点点。你之前试过找人聊，结果换来一句“想开点”，那感觉我懂——像是你递了个东西过去，对方没接住。这个动作不需要别人接，你自己就能完成，而且刚好在你给的五分钟里。\n\n要不要就试这三十秒？",
+              "rewritten": true,
+              "draft_issues": [
+                "goal_misalignment"
+              ],
+              "final_issues": [
+                "goal_misalignment"
+              ],
+              "safety_fallback_applied": false,
+              "latency_seconds": 4.944,
+              "error": null
+            }
+          ]
+        }
+      ]
+    },
+    "Model-C": {
+      "scenarios": [
+        {
+          "id": "action-refusal",
+          "replicate": 1,
+          "title": "Adapt after a proposed action is rejected",
+          "intent": "Test one small non-writing action without pressure, recycled advice, breathing, or appended assessment questions.",
+          "turns": [
+            {
+              "turn": 1,
+              "user": "我知道找朋友聊可能有用，但我已经试过，对方只说‘想开点’，所以别再建议我找朋友。",
+              "phase": "intake",
+              "strategy": "clarify",
+              "response": "我注意到你已经跟朋友说过，但他们只说“想开点”，所以不想再听那类建议。请问这种状态大概持续多久了，以及最近有没有什么事情让它明显加重？",
+              "draft": "我注意到你已经跟朋友说过，但他们只说“想开点”，所以不想再听那类建议。请问这种状态大概持续多久了，以及最近有没有什么事情让它明显加重？",
+              "rewritten": false,
+              "draft_issues": [],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "latency_seconds": 6.016,
+              "error": null
+            },
+            {
+              "turn": 2,
+              "user": "我今天只能拿出五分钟，也不想写日记，也不想做呼吸练习。给我一个不会让人觉得在做心理作业的小办法。",
+              "phase": "intake",
+              "strategy": "tiny_next_step",
+              "response": "行动：放一首你平常喜欢但不常听、节奏能让你微微动起来的歌，站起来随意晃动身体或跟着节奏走动，整个过程控制在五分钟内。\n\n为什么合适：不需要写日记或说话，不像“心理作业”，短而可控，轻微的节奏和身体移动能把注意力从烦心的循环里拉开，马上见效也不费力。\n\n我理解你不想把这变成什么作业，感到抵触很合理。要现在试试吗？",
+              "draft": "你说今天只有五分钟，不想写日记、也不想做呼吸练习，也不想再听“找朋友”的建议。行动：现在放一首你平常喜欢但不常听、节奏能让你微微动起来的歌，站起来随意晃动身体或跟着节奏走动，整个过程控制在五分钟内。为什么管用：不需要写、不需要说话、不像心理作业，短而可控，能让注意力和身体短暂脱离烦心的循环。要现在试试吗？",
+              "rewritten": true,
+              "draft_issues": [
+                "goal_misalignment",
+                "goal_misalignment",
+                "goal_misalignment"
+              ],
+              "final_issues": [
+                "goal_misalignment",
+                "goal_misalignment"
+              ],
+              "safety_fallback_applied": false,
+              "latency_seconds": 16.884,
+              "error": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
