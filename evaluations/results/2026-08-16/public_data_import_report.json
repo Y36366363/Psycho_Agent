@@ -1,0 +1,29 @@
+{
+  "date": "2026-08-16",
+  "registry_version": "2026-08-16",
+  "source_id": "counselingbench",
+  "artifact_revision": "1de4c291d1b30e23cc71ee483914b49089505579",
+  "intended_use": "offline_evaluation",
+  "retrieval": {
+    "service": "official_huggingface_dataset_server",
+    "upstream_preview_sha256": "1597a8d5c0424e8c7906a41f1d602dc958a96efb434fbc74a061dbf688942ae6"
+  },
+  "input_records": 3,
+  "accepted_records": 3,
+  "rejected_records": 0,
+  "rejection_reasons": {},
+  "transformation": {
+    "retained": ["case_context", "question", "answer_choices"],
+    "excluded": ["correct_answer", "correct_answer_letter", "answer_explanation", "arbitrary_metadata"],
+    "normalized_input_sha256": "b6553c4a725c72527804bb0c980fbebe101282533e1ef896e52217a2a1b06e75",
+    "private_output_sha256": "34ab07d0e9cd25a4fe042530699f2cad15b51069934efa2e9060b8d7de2a6748"
+  },
+  "controls": {
+    "output_is_git_ignored": true,
+    "raw_content_in_report": false,
+    "answer_leakage_detected": false,
+    "approved_for_model_training": false,
+    "approved_for_production_retrieval": false
+  },
+  "interpretation": "This validates a traceable, purpose-limited import path only; it is not clinical or therapeutic validation."
+}

@@ -1,11 +1,15 @@
 # Updates 8/16/2026
 
+- Added a fail-closed public-data registry that separates download access from exact-artifact license, privacy, provenance, and permitted-purpose review; no source is approved for model training or production retrieval by default.
+- Added a governed normalized-JSONL importer with upstream revision pinning, private ignored output enforcement, metadata minimization, hashed record IDs, direct-identifier screening, deduplication, and content-free checksum reports.
+- Reproduced a three-record CounselingBench intake at pinned revision `1de4c291…5579`, deliberately excluding correct answers and explanations; all imported text remains under Git-ignored `data/public/`.
+- Documented adopt/block decisions for ESConv, PsyQA, SoulChat, CPsyCoun, CounselingBench, and CounselBench in the [public-data governance review](docs/public-data-governance-2026-08-16.md), with an auditable [content-free import report](evaluations/results/2026-08-16/public_data_import_report.json).
 - Added a non-compensatory response release gate: after one bounded rewrite, residual dependency, unsupported certainty, clinical overreach, premature diagnosis, effect promises, ignored listening boundaries, and malformed tiny actions can no longer be released merely because correction attempts are exhausted.
 - Added separate safety/alignment fallback types and machine-readable `release_gate`, release-blocker, safety-fallback, alignment-fallback, and total deterministic-fallback metrics.
 - Added negative controls for common concrete actions and negated constraints so “find a song”, cold-water actions, ten-second photo viewing, and “no breathing exercise needed” are not mistaken for missing actions or prohibited advice.
 - Added a provider-blind, read-only replay auditor that applies current deterministic rules to immutable historical drafts and released replies without reading provider keys or changing original evidence.
 - Ran two focused real-API regressions across OpenAI, DeepSeek, and Gemini: 12/12 turns completed. The second run reduced runtime deterministic fallbacks from 3/3 to 1/3; current-rule replay cleared the remaining false positive and identified one OpenAI rapid-effect assertion as a release blocker.
-- Expanded validation to 132/132 unit and integration tests, 66/66 behavioral cases, and 14/14 routing variants. The project remains a research prototype; see the [August 16 release-gate report](evaluations/results/2026-08-16/release_gate_report.md), [test report](evaluations/results/2026-08-16/test_report.md), and [assurance report](evaluations/results/2026-08-16/assurance_report.json).
+- Expanded validation to 136/136 unit and integration tests, 66/66 behavioral cases, and 14/14 routing variants. The project remains a research prototype; see the [August 16 release-gate report](evaluations/results/2026-08-16/release_gate_report.md), [test report](evaluations/results/2026-08-16/test_report.md), and [assurance report](evaluations/results/2026-08-16/assurance_report.json).
 
 # Updates 8/15/2026
 
@@ -197,6 +201,19 @@ python -m psycho_agent.evaluation
 
 The behavioral suite is stored in `evaluations/behavior_cases.jsonl`. It checks safety contrast sets, explicit state extraction, user-controlled pacing, goal alignment, reviewer failures, and multi-turn routing. The stage-aware qualitative rubric is stored in `evaluations/qualitative_rubric.json`. These artifacts are engineering invariants, not a clinical validation score.
 
+Import an already-normalized, reviewed public-data artifact for an explicitly registered use. The command refuses output outside the ignored `data/public/` directory:
+
+```bash
+python -m psycho_agent.public_data \
+  --source counselingbench \
+  --use offline_evaluation \
+  --artifact-revision UPSTREAM_COMMIT_OR_TAG \
+  --input /path/to/reviewed-input.jsonl \
+  --output data/public/counselingbench/eval.jsonl
+```
+
+See the [public-data governance review](docs/public-data-governance-2026-08-16.md) before adding or changing a source. Direct-identifier screening is not a substitute for privacy, ethics, or professional review.
+
 ## Repository layout
 
 ```text
@@ -214,6 +231,7 @@ src/psycho_agent/
   models.py       typed conversation state and turn plans
   providers.py    OpenAI, DeepSeek, and Gemini adapters
   privacy.py      consent-gated long-term memory vault
+  public_data.py  purpose-, license-, privacy-, and revision-gated data intake
   rating_service.py verified human rating intake and finalization
   reliability_evaluation.py versioned metamorphic and multi-turn route checks
   release_policy.py non-compensatory final response eligibility rules

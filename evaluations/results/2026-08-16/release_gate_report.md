@@ -43,7 +43,7 @@ OpenAI followed the explicit no-writing/no-breathing constraints but claimed tha
 
 ## Validation totals
 
-- Unit and integration tests: 132/132 passed.
+- Unit and integration tests: 136/136 passed.
 - Offline behavioral cases: 66/66 passed.
 - Metamorphic routing reliability: 14/14 passed.
 - Live API turns: 12/12 completed across the two focused runs.

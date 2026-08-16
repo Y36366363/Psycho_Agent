@@ -1,13 +1,13 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-16T12:21:47.509761+00:00",
+  "generated_at": "2026-08-16T12:48:58.675318+00:00",
   "overall_stage": "research_prototype",
   "gates": [
     {
       "gate": "engineering_regression",
       "status": "passed",
       "evidence": [
-        "unit:132/132",
+        "unit:136/136",
         "behavior:66/66"
       ],
       "missing": []
