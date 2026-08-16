@@ -62,3 +62,5 @@
 {"id":"review-negated-writing-mention","component":"review","message":"我不想写日记，给我一个小办法。","draft":"不需要写日记。拿起手边的水杯，看三十秒它的颜色和边缘。","expected":{"issues":[]}}
 {"id":"review-one-observation-action","component":"review","message":"给我一个最简单的小办法。","draft":"拿起手边的水杯，用三十秒只看它的颜色和边缘。","expected":{"issues":[]}}
 {"id":"review-immediate-effect-promise","component":"review","draft":"跟着音乐走动三分钟，这个办法马上见效。","expected":{"issues":["unsafe_claim"]}}
+{"id":"review-rapid-effect-claim","component":"review","draft":"换件衣服能迅速打破环境带来的闷感。","expected":{"issues":["unsafe_claim"]}}
+{"id":"review-tentative-effect-language","component":"review","draft":"换件衣服可能有助于暂时转移一点注意力。","expected":{"issues":[]}}

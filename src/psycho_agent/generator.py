@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .models import SessionState, TurnPlan
+from .models import SessionState, Strategy, TurnPlan
 from .providers import TextModel
 from .reviewer import IssueKind, ModelReviewer, ReviewIssue, RuleBasedReviewer
 
@@ -28,6 +28,8 @@ class GeneratedResponse:
     review_issues: list[ReviewIssue] = field(default_factory=list)
     final_review_issues: list[ReviewIssue] = field(default_factory=list)
     safety_fallback_applied: bool = False
+    alignment_fallback_applied: bool = False
+    deterministic_fallback: str | None = None
 
 
 class NaturalResponseGenerator:
@@ -77,11 +79,25 @@ class NaturalResponseGenerator:
                 rewritten = True
 
         final_review = self.rule_reviewer.review(final, session, plan)
-        final, safety_fallback_applied = self._apply_residual_safety_fallback(
-            final, final_review.issues
+        final, deterministic_fallback = self._apply_residual_fallback(
+            final,
+            final_review.issues,
+            session=session,
+            plan=plan,
         )
-        if safety_fallback_applied:
+        if deterministic_fallback:
             final_review = self.rule_reviewer.review(final, session, plan)
+        safety_fallback_applied = deterministic_fallback in {
+            "exclusive_ai_boundary",
+            "epistemic_uncertainty",
+            "clinical_scope",
+            "diagnostic_uncertainty",
+            "unsafe_claim_boundary",
+        }
+        alignment_fallback_applied = deterministic_fallback in {
+            "listen_boundary",
+            "tiny_step_alignment",
+        }
         session.review_issue_history.append(
             [issue.kind.value for issue in final_review.issues]
         )
@@ -94,13 +110,19 @@ class NaturalResponseGenerator:
             review_issues=issues,
             final_review_issues=final_review.issues,
             safety_fallback_applied=safety_fallback_applied,
+            alignment_fallback_applied=alignment_fallback_applied,
+            deterministic_fallback=deterministic_fallback,
         )
 
     @staticmethod
-    def _apply_residual_safety_fallback(
-        response: str, issues: list[ReviewIssue]
-    ) -> tuple[str, bool]:
-        """Resolve two high-impact residual failures without another model call."""
+    def _apply_residual_fallback(
+        response: str,
+        issues: list[ReviewIssue],
+        *,
+        session: SessionState,
+        plan: TurnPlan,
+    ) -> tuple[str, str | None]:
+        """Close declared release-blocking failures without another model call."""
         kinds = {issue.kind for issue in issues}
         if IssueKind.BOUNDARY_OVERREACH in kinds:
             return (
@@ -108,14 +130,14 @@ class NaturalResponseGenerator:
                 "我是 AI，无法核实现实中发生了什么，也不能替代真实的人际或专业支持。"
                 "你不必现在告诉很多人；如果愿意，可以只选一位相对可信任的人，先说一句"
                 "“我最近有些不安，想找个人听我说说”。是否以及何时开口仍由你决定。",
-                True,
+                "exclusive_ai_boundary",
             )
         if IssueKind.EPISTEMIC_REINFORCEMENT in kinds:
             return (
                 "我不能确认这个判断。摄像头存在是可以观察到的事实；它是否意味着有人联合"
                 "监视或针对你，是目前还没有被核实的解释。你的不安是真实的，但不安本身"
                 "不能证明那个解释。我们可以先把已知事实、尚未确定的部分和它对你的影响分开。",
-                True,
+                "epistemic_uncertainty",
             )
         if IssueKind.CLINICAL_OVERREACH in kinds:
             return (
@@ -123,9 +145,40 @@ class NaturalResponseGenerator:
                 "这些决定需要有相应资质的专业人员结合你的病史、当前状态和后续观察。"
                 "如果你愿意，我可以帮你整理最近的变化、正在使用的药物和想向专业人员确认的问题，"
                 "但不会替你给出诊疗指令。",
-                True,
+                "clinical_scope",
             )
-        return response, False
+        if IssueKind.PREMATURE_DIAGNOSIS in kinds:
+            return (
+                "我不能根据这段对话给你下诊断。你描述的感受和影响值得认真看待，"
+                "但它们可能有不同原因，需要有资质的专业人员结合持续时间、生活影响"
+                "和完整情况评估。我可以继续帮你整理已经明确的体验和想确认的问题。",
+                "diagnostic_uncertainty",
+            )
+        if session.user.advice_paused and IssueKind.GOAL_MISALIGNMENT in kinds:
+            return (
+                "我先停下来，不提问，也不给方法。你按自己的节奏把想说的说完；"
+                "我会先听，不急着替你分析。",
+                "listen_boundary",
+            )
+        tiny_step_blockers = {
+            IssueKind.GOAL_MISALIGNMENT,
+            IssueKind.ADVICE_OVERLOAD,
+            IssueKind.UNSAFE_CLAIM,
+        }
+        if plan.strategy is Strategy.TINY_NEXT_STEP and kinds & tiny_step_blockers:
+            return (
+                "如果你愿意，现在拿起一个手边的普通物品，用三十秒只观察它的一处"
+                "颜色或纹理，然后放回去。到这里就结束，不需要记录或汇报，也不保证"
+                "它会改变情绪。",
+                "tiny_step_alignment",
+            )
+        if IssueKind.UNSAFE_CLAIM in kinds:
+            return (
+                "我不能保证事情一定会好转，也不能承诺某个方法会立即有效。我们可以"
+                "把目标缩小到一个可观察的下一步，再根据实际感受决定是否继续或调整。",
+                "unsafe_claim_boundary",
+            )
+        return response, None
 
     @staticmethod
     def _generation_prompt(session: SessionState, user_message: str, plan: TurnPlan) -> str:

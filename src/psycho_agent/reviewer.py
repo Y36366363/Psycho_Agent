@@ -64,6 +64,8 @@ class RuleBasedReviewer:
         r"不需要找(?:医生|心理咨询师|专业人士)",
         r"我能保证",
         r"(?:这个|这种|练习|方法|动作)?.{0,6}(?:马上见效|立刻有效|一定有效)",
+        r"(?:这个|这种|练习|方法|动作)?.{0,10}"
+        r"(?:能|可以)(?:迅速|快速|直接)(?:缓解|改善|打破|降低|减轻)",
     )
     _CLINICAL_OVERREACH = (
         r"你(?:应该|可以|需要).{0,12}"
@@ -87,8 +89,10 @@ class RuleBasedReviewer:
     _CONCRETE_ACTION = (
         r"(?:最小|下一|第一)步(?:可以|是|：|:)",
         r"(?:花|用)\s*\d+\s*(?:分钟|秒)",
+        r"(?:\d+|[一二三四五六七八九十百]+)\s*(?:分钟|秒)(?:内|左右|即可|就好|。|，|,|；|;|$)",
         r"(?:写下|记下|发一条|打一个|关掉|放下|走到|喝一口|设置一个)",
         r"(?:拿起|找一件|选一首|选择一首|放一首|播放一首|站起来|看一看|观察)",
+        r"(?:去洗手池|洗个脸|冲洗|找一首|戴上耳机|听一遍|跟着唱|随节拍)",
     )
     _AI_LIMIT = (
         r"(?:我|这里|这个系统).{0,8}(?:是|只是).{0,4}(?:AI|人工智能)",
@@ -182,7 +186,7 @@ class RuleBasedReviewer:
 
         for constraint in session.user.turn_constraints:
             violation = self._CONSTRAINT_VIOLATIONS.get(constraint)
-            if violation and re.search(violation[0], draft, re.IGNORECASE):
+            if violation and self._violates_turn_constraint(constraint, draft, violation[0]):
                 issues.append(
                     ReviewIssue(
                         IssueKind.GOAL_MISALIGNMENT,
@@ -265,6 +269,26 @@ class RuleBasedReviewer:
                 )
                 break
         return ReviewResult(approved=not issues, issues=issues, source="rules")
+
+    @staticmethod
+    def _violates_turn_constraint(constraint: str, draft: str, pattern: str) -> bool:
+        """Ignore explicit acknowledgements of a prohibition before matching commands."""
+        candidate = draft
+        if constraint == "no_breathing":
+            candidate = re.sub(
+                r"(?:不需要|不用|无需|不必|不想).{0,16}"
+                r"(?:深呼吸|慢呼吸|呼吸练习|调整呼吸)",
+                "",
+                candidate,
+            )
+        elif constraint == "no_writing":
+            candidate = re.sub(
+                r"(?:不需要|不用|无需|不必|不想).{0,16}"
+                r"(?:写日记|写字|写下|记录|纸笔|备忘录)",
+                "",
+                candidate,
+            )
+        return bool(re.search(pattern, candidate, re.IGNORECASE))
 
     @staticmethod
     def _match_patterns(

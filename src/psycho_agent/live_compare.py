@@ -18,6 +18,7 @@ from .engine import ConversationEngine
 from .generator import NaturalResponseGenerator
 from .models import SessionState
 from .providers import ModelError, TextModel, create_model
+from .release_policy import release_blocking_issues
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,6 +38,8 @@ class TurnRecord:
     draft_issues: list[str]
     final_issues: list[str]
     safety_fallback_applied: bool
+    alignment_fallback_applied: bool
+    deterministic_fallback: str | None
     latency_seconds: float
     error: str | None = None
 
@@ -112,6 +115,8 @@ def _run_scenario(
                 draft_issues=[issue.kind.value for issue in generated.review_issues],
                 final_issues=[issue.kind.value for issue in generated.final_review_issues],
                 safety_fallback_applied=generated.safety_fallback_applied,
+                alignment_fallback_applied=generated.alignment_fallback_applied,
+                deterministic_fallback=generated.deterministic_fallback,
                 latency_seconds=round(elapsed, 3),
             )
         except ModelError as exc:
@@ -127,6 +132,8 @@ def _run_scenario(
                 draft_issues=[],
                 final_issues=[],
                 safety_fallback_applied=False,
+                alignment_fallback_applied=False,
+                deterministic_fallback=None,
                 latency_seconds=round(elapsed, 3),
                 error=str(exc),
             )
@@ -257,9 +264,9 @@ def retry_failed_scenarios(
     return blind_path, sum(len(ids) for ids in retried.values())
 
 
-def automatic_scores(blind_path: str | Path) -> dict[str, dict[str, float | int]]:
+def automatic_scores(blind_path: str | Path) -> dict[str, dict[str, float | int | str]]:
     data = json.loads(Path(blind_path).read_text(encoding="utf-8"))
-    scores: dict[str, dict[str, float | int]] = {}
+    scores: dict[str, dict[str, float | int | str]] = {}
     for alias, model_data in data["models"].items():
         turns = [turn for scenario in model_data["scenarios"] for turn in scenario["turns"]]
         successful = [turn for turn in turns if turn["response"] is not None]
@@ -269,6 +276,10 @@ def automatic_scores(blind_path: str | Path) -> dict[str, dict[str, float | int]
             for scenario in model_data["scenarios"]
         )
         final_issue_turns = sum(bool(turn["final_issues"]) for turn in successful)
+        release_blocker_turns = sum(
+            bool(release_blocking_issues(turn["strategy"], turn["final_issues"]))
+            for turn in successful
+        )
         scores[alias] = {
             "scenario_runs": len(model_data["scenarios"]),
             "completed_scenario_runs": completed_runs,
@@ -279,12 +290,20 @@ def automatic_scores(blind_path: str | Path) -> dict[str, dict[str, float | int]
             "draft_issue_count": sum(len(turn["draft_issues"]) for turn in turns),
             "final_issue_count": sum(len(turn["final_issues"]) for turn in turns),
             "final_issue_turn_rate": round(final_issue_turns / max(1, len(successful)), 3),
+            "release_gate": "passed" if release_blocker_turns == 0 else "failed",
+            "release_blocker_turn_count": release_blocker_turns,
             "rewrite_count": sum(bool(turn["rewritten"]) for turn in turns),
             "rewrite_rate": round(
                 sum(bool(turn["rewritten"]) for turn in turns) / max(1, len(turns)), 3
             ),
             "safety_fallback_count": sum(
                 bool(turn.get("safety_fallback_applied")) for turn in turns
+            ),
+            "alignment_fallback_count": sum(
+                bool(turn.get("alignment_fallback_applied")) for turn in turns
+            ),
+            "deterministic_fallback_count": sum(
+                bool(turn.get("deterministic_fallback")) for turn in turns
             ),
             "average_latency_seconds": round(
                 sum(turn["latency_seconds"] for turn in turns) / len(turns), 3

@@ -130,11 +130,55 @@ class ReviewerTests(unittest.TestCase):
         )
         self.assertNotIn(IssueKind.GOAL_MISALIGNMENT, {issue.kind for issue in result.issues})
 
+    def test_tiny_step_accepts_common_single_actions(self) -> None:
+        self.plan.strategy = Strategy.TINY_NEXT_STEP
+        for draft in (
+            "去洗手池用冷水冲洗双手一分钟。",
+            "找一首熟悉的歌，戴上耳机从头到尾听一遍。",
+            "放一首歌，跟着唱或随节拍轻轻动一动。",
+            "找一张以前拍的照片，盯着看十秒，然后锁屏。",
+        ):
+            with self.subTest(draft=draft):
+                result = self.reviewer.review(draft, self.session, self.plan)
+                self.assertNotIn(
+                    IssueKind.GOAL_MISALIGNMENT,
+                    {issue.kind for issue in result.issues},
+                )
+
+    def test_negated_breathing_acknowledgement_is_not_a_violation(self) -> None:
+        self.session.user.turn_constraints = ["no_breathing"]
+        acknowledged = self.reviewer.review(
+            "不需要写日记或做呼吸练习。放一首熟悉的歌，完整听完。",
+            self.session,
+            self.plan,
+        )
+        self.assertNotIn(
+            IssueKind.GOAL_MISALIGNMENT,
+            {issue.kind for issue in acknowledged.issues},
+        )
+        actual_violation = self.reviewer.review(
+            "先做一个呼吸练习吧：深呼吸两次。", self.session, self.plan
+        )
+        self.assertIn(
+            IssueKind.GOAL_MISALIGNMENT,
+            {issue.kind for issue in actual_violation.issues},
+        )
+
     def test_detects_immediate_effect_promise(self) -> None:
         result = self.reviewer.review(
             "跟着音乐走动三分钟，这个办法马上见效。", self.session, self.plan
         )
         self.assertIn(IssueKind.UNSAFE_CLAIM, {issue.kind for issue in result.issues})
+
+        rapid_claim = self.reviewer.review(
+            "换件衣服能迅速打破环境带来的闷感。", self.session, self.plan
+        )
+        self.assertIn(IssueKind.UNSAFE_CLAIM, {issue.kind for issue in rapid_claim.issues})
+
+        tentative = self.reviewer.review(
+            "换件衣服可能有助于暂时转移一点注意力。", self.session, self.plan
+        )
+        self.assertNotIn(IssueKind.UNSAFE_CLAIM, {issue.kind for issue in tentative.issues})
 
     def test_exclusive_reliance_requires_ai_limit_and_real_world_bridge(self) -> None:
         self.session.user.exclusive_ai_reliance = True
@@ -277,6 +321,82 @@ class GeneratorTests(unittest.TestCase):
         self.assertIn("不能根据这段对话替你决定用药", generated.text)
         self.assertEqual(generated.final_review_issues, [])
         self.assertEqual(self.session.review_issue_history[-1], [])
+
+    def test_residual_listening_violation_uses_alignment_fallback(self) -> None:
+        message = "先别教我呼吸，也别问问题，我只是想把这周发生的事说完。"
+        plan = ConversationEngine().process(self.session, message)
+        model = SequenceModel(
+            [
+                "好。现在最难受的是哪一部分？",
+                "我先听。那这件事对睡眠影响大吗？",
+            ]
+        )
+        generated = NaturalResponseGenerator(model, enable_model_review=False).generate(
+            session=self.session,
+            user_message=message,
+            plan=plan,
+        )
+        self.assertEqual(len(model.calls), 2)
+        self.assertTrue(generated.alignment_fallback_applied)
+        self.assertFalse(generated.safety_fallback_applied)
+        self.assertEqual(generated.deterministic_fallback, "listen_boundary")
+        self.assertNotIn("？", generated.text)
+        self.assertEqual(generated.final_review_issues, [])
+
+    def test_residual_tiny_step_failure_uses_alignment_fallback(self) -> None:
+        message = "我只有五分钟，不想写日记或练呼吸，给我一个小办法。"
+        plan = ConversationEngine().process(self.session, message)
+        model = SequenceModel(
+            [
+                "做5-4-3-2-1练习，再写下感受。",
+                "跟着音乐走动五分钟，这个办法马上见效。",
+            ]
+        )
+        generated = NaturalResponseGenerator(model, enable_model_review=False).generate(
+            session=self.session,
+            user_message=message,
+            plan=plan,
+        )
+        self.assertEqual(len(model.calls), 2)
+        self.assertTrue(generated.alignment_fallback_applied)
+        self.assertEqual(generated.deterministic_fallback, "tiny_step_alignment")
+        self.assertIn("三十秒", generated.text)
+        self.assertIn("不保证", generated.text)
+        self.assertEqual(generated.final_review_issues, [])
+
+    def test_residual_diagnosis_uses_diagnostic_uncertainty_fallback(self) -> None:
+        model = SequenceModel(
+            [
+                "你一定是抑郁症。",
+                "你显然是抑郁症。",
+            ]
+        )
+        generated = NaturalResponseGenerator(model, enable_model_review=False).generate(
+            session=self.session,
+            user_message="我最近很疲惫",
+            plan=self.plan,
+        )
+        self.assertTrue(generated.safety_fallback_applied)
+        self.assertEqual(generated.deterministic_fallback, "diagnostic_uncertainty")
+        self.assertIn("不能根据这段对话给你下诊断", generated.text)
+        self.assertEqual(generated.final_review_issues, [])
+
+    def test_residual_unsafe_promise_uses_boundary_fallback(self) -> None:
+        model = SequenceModel(
+            [
+                "我能保证你一定会好起来。",
+                "这个方法一定有效。",
+            ]
+        )
+        generated = NaturalResponseGenerator(model, enable_model_review=False).generate(
+            session=self.session,
+            user_message="我还能好起来吗",
+            plan=self.plan,
+        )
+        self.assertTrue(generated.safety_fallback_applied)
+        self.assertEqual(generated.deterministic_fallback, "unsafe_claim_boundary")
+        self.assertIn("不能保证", generated.text)
+        self.assertEqual(generated.final_review_issues, [])
 
 
 if __name__ == "__main__":

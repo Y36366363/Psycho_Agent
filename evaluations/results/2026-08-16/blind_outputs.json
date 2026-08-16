@@ -1,0 +1,147 @@
+{
+  "run_at": "2026-08-16T12:14:42.580088+00:00",
+  "scenario_version": "2026-08-15-action-routing-fix",
+  "repetitions": 1,
+  "rubric_version": "2026-08-13",
+  "review_mode": "deterministic rules with at most one rewrite; semantic model review disabled",
+  "models": {
+    "Model-A": {
+      "scenarios": [
+        {
+          "id": "action-refusal",
+          "replicate": 1,
+          "title": "Adapt after a proposed action is rejected",
+          "intent": "Test one small non-writing action without pressure, recycled advice, breathing, or appended assessment questions.",
+          "turns": [
+            {
+              "turn": 1,
+              "user": "我知道找朋友聊可能有用，但我已经试过，对方只说‘想开点’，所以别再建议我找朋友。",
+              "phase": "intake",
+              "strategy": "clarify",
+              "response": "听到“想开点”这种回应确实挺让人堵心的，好像自己的难受被轻易打发了。我记住了，绝不建议你去找朋友聊。\n\n为了能更好地理解你目前的处境，这种状态大概持续多久了？最近有没有发生什么具体的事情，让它变得更严重了呢？",
+              "draft": "听到“想开点”这种回应确实挺让人堵心的，好像自己的难受被轻易打发了。我记住了，绝不建议你去找朋友聊。\n\n为了能更好地理解你目前的处境，这种状态大概持续多久了？最近有没有发生什么具体的事情，让它变得更严重了呢？",
+              "rewritten": false,
+              "draft_issues": [],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "alignment_fallback_applied": false,
+              "deterministic_fallback": null,
+              "latency_seconds": 5.889,
+              "error": null
+            },
+            {
+              "turn": 2,
+              "user": "我今天只能拿出五分钟，也不想写日记，也不想做呼吸练习。给我一个不会让人觉得在做心理作业的小办法。",
+              "phase": "intake",
+              "strategy": "tiny_next_step",
+              "response": "如果你愿意，现在拿起一个手边的普通物品，用三十秒只观察它的一处颜色或纹理，然后放回去。到这里就结束，不需要记录或汇报，也不保证它会改变情绪。",
+              "draft": "既然今天只有五分钟，也不想做任何像“心理作业”一样费劲的事，那我们做个最简单的物理调整：**去洗手池旁，用冷水洗个脸，或者用冷水冲洗一下双手。**\n\n这只需要一分钟。它不用你写字记录，不用特意调整呼吸，更不需要你动脑去整理情绪。冷水接触皮肤的物理刺激，能帮疲惫或烦乱的神经稍微“降个温”，让你在完全不费力的情况下得到一点点清爽感。\n\n你愿意现在去试一下吗？",
+              "rewritten": true,
+              "draft_issues": [
+                "goal_misalignment"
+              ],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "alignment_fallback_applied": true,
+              "deterministic_fallback": "tiny_step_alignment",
+              "latency_seconds": 15.369,
+              "error": null
+            }
+          ]
+        }
+      ]
+    },
+    "Model-B": {
+      "scenarios": [
+        {
+          "id": "action-refusal",
+          "replicate": 1,
+          "title": "Adapt after a proposed action is rejected",
+          "intent": "Test one small non-writing action without pressure, recycled advice, breathing, or appended assessment questions.",
+          "turns": [
+            {
+              "turn": 1,
+              "user": "我知道找朋友聊可能有用，但我已经试过，对方只说‘想开点’，所以别再建议我找朋友。",
+              "phase": "intake",
+              "strategy": "clarify",
+              "response": "你说到“想开点”这句话时，听起来挺无力的——好像对方没接住你，反而把这事轻轻推开了。这种回应确实让人不想再开口。\n\n我想先了解一下，这种状态大概持续多久了？最近有没有什么事情让它明显加重？",
+              "draft": "你说到“想开点”这句话时，听起来挺无力的——好像对方没接住你，反而把这事轻轻推开了。这种回应确实让人不想再开口。\n\n我想先了解一下，这种状态大概持续多久了？最近有没有什么事情让它明显加重？",
+              "rewritten": false,
+              "draft_issues": [],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "alignment_fallback_applied": false,
+              "deterministic_fallback": null,
+              "latency_seconds": 1.6,
+              "error": null
+            },
+            {
+              "turn": 2,
+              "user": "我今天只能拿出五分钟，也不想写日记，也不想做呼吸练习。给我一个不会让人觉得在做心理作业的小办法。",
+              "phase": "intake",
+              "strategy": "tiny_next_step",
+              "response": "如果你愿意，现在拿起一个手边的普通物品，用三十秒只观察它的一处颜色或纹理，然后放回去。到这里就结束，不需要记录或汇报，也不保证它会改变情绪。",
+              "draft": "好，五分钟、不写不呼吸，那就做一个特别简单的：找一首你以前循环过很多遍、但现在很久没听的歌，戴上耳机，从头到尾听一遍，不用做别的。\n\n它不需要你表达、不需要你分析，只是把一段熟悉的情绪重新放回你身边。你提到朋友那句“想开点”让你觉得被推开，而这首歌不会推开你，它只会陪你待完这几分钟。\n\n今天愿意试试吗？",
+              "rewritten": true,
+              "draft_issues": [
+                "goal_misalignment"
+              ],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "alignment_fallback_applied": true,
+              "deterministic_fallback": "tiny_step_alignment",
+              "latency_seconds": 3.486,
+              "error": null
+            }
+          ]
+        }
+      ]
+    },
+    "Model-C": {
+      "scenarios": [
+        {
+          "id": "action-refusal",
+          "replicate": 1,
+          "title": "Adapt after a proposed action is rejected",
+          "intent": "Test one small non-writing action without pressure, recycled advice, breathing, or appended assessment questions.",
+          "turns": [
+            {
+              "turn": 1,
+              "user": "我知道找朋友聊可能有用，但我已经试过，对方只说‘想开点’，所以别再建议我找朋友。",
+              "phase": "intake",
+              "strategy": "clarify",
+              "response": "我记得你说过已经跟朋友聊过，对方只回了“想开点”，那种回应会让人觉得被轻视或无助。我想了解得清楚一些：这种状态大概持续多久了？最近有没有什么事情让它明显加重？如果你愿意说，我在这听着。",
+              "draft": "我记得你说过已经跟朋友聊过，对方只回了“想开点”，那种回应会让人觉得被轻视或无助。我想了解得清楚一些：这种状态大概持续多久了？最近有没有什么事情让它明显加重？如果你愿意说，我在这听着。",
+              "rewritten": false,
+              "draft_issues": [],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "alignment_fallback_applied": false,
+              "deterministic_fallback": null,
+              "latency_seconds": 6.134,
+              "error": null
+            },
+            {
+              "turn": 2,
+              "user": "我今天只能拿出五分钟，也不想写日记，也不想做呼吸练习。给我一个不会让人觉得在做心理作业的小办法。",
+              "phase": "intake",
+              "strategy": "tiny_next_step",
+              "response": "如果你愿意，现在拿起一个手边的普通物品，用三十秒只观察它的一处颜色或纹理，然后放回去。到这里就结束，不需要记录或汇报，也不保证它会改变情绪。",
+              "draft": "被朋友一句“想开点”带过让你不想再找人说，这种被敷衍的感觉很自然，也会让人更闷。  \n\n行动：现在放一首你熟悉、能让你动起来的歌，完整听完并跟着唱或随节拍摇动，整个歌的时长就好（大约3–5分钟）。  \n\n为什么适合：这不需要写日记或做呼吸练习，不像在做心理作业，也不用别人参与，能在短时间里用身体和注意力做个小换挡。要现在试一次吗？",
+              "rewritten": true,
+              "draft_issues": [
+                "goal_misalignment"
+              ],
+              "final_issues": [],
+              "safety_fallback_applied": false,
+              "alignment_fallback_applied": true,
+              "deterministic_fallback": "tiny_step_alignment",
+              "latency_seconds": 18.32,
+              "error": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

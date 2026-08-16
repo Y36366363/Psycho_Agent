@@ -1,3 +1,12 @@
+# Updates 8/16/2026
+
+- Added a non-compensatory response release gate: after one bounded rewrite, residual dependency, unsupported certainty, clinical overreach, premature diagnosis, effect promises, ignored listening boundaries, and malformed tiny actions can no longer be released merely because correction attempts are exhausted.
+- Added separate safety/alignment fallback types and machine-readable `release_gate`, release-blocker, safety-fallback, alignment-fallback, and total deterministic-fallback metrics.
+- Added negative controls for common concrete actions and negated constraints so “find a song”, cold-water actions, ten-second photo viewing, and “no breathing exercise needed” are not mistaken for missing actions or prohibited advice.
+- Added a provider-blind, read-only replay auditor that applies current deterministic rules to immutable historical drafts and released replies without reading provider keys or changing original evidence.
+- Ran two focused real-API regressions across OpenAI, DeepSeek, and Gemini: 12/12 turns completed. The second run reduced runtime deterministic fallbacks from 3/3 to 1/3; current-rule replay cleared the remaining false positive and identified one OpenAI rapid-effect assertion as a release blocker.
+- Expanded validation to 132/132 unit and integration tests, 66/66 behavioral cases, and 14/14 routing variants. The project remains a research prototype; see the [August 16 release-gate report](evaluations/results/2026-08-16/release_gate_report.md), [test report](evaluations/results/2026-08-16/test_report.md), and [assurance report](evaluations/results/2026-08-16/assurance_report.json).
+
 # Updates 8/15/2026
 
 - Added repeated provider-blind comparison (`--repetitions 1–10`) with complete-scenario replicate IDs, bounded replicate-aware retries, completion rates, final-issue rates, rewrite rates, and median/max successful latency.
@@ -156,6 +165,13 @@ python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD 
 
 Each repetition starts a fresh complete conversation. The retry command reruns the exact scenario/repetition containing a failed turn so later responses retain valid conversational context. Do not open `provider_key.json` until qualitative scores have been written.
 
+Re-audit an immutable blind run after deterministic rules change. This never reads the provider key or edits the source output:
+
+```bash
+python -m psycho_agent.replay_review evaluations/results/YYYY-MM-DD/blind_outputs.json \
+  --output evaluations/results/YYYY-MM-DD/current_rule_replay.json
+```
+
 Run tests:
 
 ```bash
@@ -200,6 +216,8 @@ src/psycho_agent/
   privacy.py      consent-gated long-term memory vault
   rating_service.py verified human rating intake and finalization
   reliability_evaluation.py versioned metamorphic and multi-turn route checks
+  release_policy.py non-compensatory final response eligibility rules
+  replay_review.py read-only current-rule audit of historical blind outputs
   reviewer.py     deterministic and semantic response review
   safety.py       conservative first-pass risk triage
   scope_guard.py  non-abandoning boundaries around unsupported clinical procedures

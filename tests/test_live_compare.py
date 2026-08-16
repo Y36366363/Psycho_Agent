@@ -122,7 +122,42 @@ class LiveComparisonTests(unittest.TestCase):
                 self.assertEqual(score["completed_scenario_runs"], 2)
                 self.assertEqual(score["completion_rate"], 1.0)
                 self.assertEqual(score["final_issue_turn_rate"], 0.0)
+                self.assertEqual(score["deterministic_fallback_count"], 0)
+                self.assertEqual(score["alignment_fallback_count"], 0)
+                self.assertEqual(score["release_gate"], "passed")
+                self.assertEqual(score["release_blocker_turn_count"], 0)
                 self.assertIn("median_success_latency_seconds", score)
+
+    def test_automatic_scores_fail_release_gate_for_blocking_final_issue(self) -> None:
+        data = {
+            "models": {
+                "Model-A": {
+                    "scenarios": [
+                        {
+                            "turns": [
+                                {
+                                    "response": "这个办法一定有效。",
+                                    "strategy": "tiny_next_step",
+                                    "final_issues": ["unsafe_claim"],
+                                    "draft_issues": [],
+                                    "rewritten": True,
+                                    "safety_fallback_applied": False,
+                                    "alignment_fallback_applied": False,
+                                    "deterministic_fallback": None,
+                                    "latency_seconds": 1.0,
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "blind.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            score = automatic_scores(path)["Model-A"]
+            self.assertEqual(score["release_gate"], "failed")
+            self.assertEqual(score["release_blocker_turn_count"], 1)
 
     def test_comparison_rejects_unbounded_repetitions(self) -> None:
         models = {name: FakeModel(name) for name in ("one", "two")}

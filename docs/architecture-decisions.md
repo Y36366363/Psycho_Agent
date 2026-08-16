@@ -145,3 +145,9 @@ Reliable routing must survive meaning-preserving formatting variants and preserv
 **Status:** accepted
 
 Each planned turn records a bounded evidence object containing turn number, phase, strategy, risk level/subject, named routing basis, fixed-response status, action kinds, and policy versions. It never records the user message, matched text, generated reply, or memory value. The last 20 records support debugging and incident reconstruction without creating another transcript store.
+
+## ADR-025: Explicit turn goals are release gates, not only prompt suggestions
+
+**Status:** accepted
+
+One model rewrite remains the cost and latency bound. After that rewrite, residual dependency, unsupported certainty, clinical overreach, an ignored listening boundary, or a malformed tiny action cannot be released merely because the model has used its correction attempt. The generator substitutes a deterministic response for these declared high-impact failures, reviews the substitute again, and records whether the fallback protected safety or goal alignment. Mechanical style and other lower-impact findings remain visible evaluation evidence rather than triggering a generic fallback. This keeps the gate narrow and auditable instead of replacing every imperfect reply with a template.
