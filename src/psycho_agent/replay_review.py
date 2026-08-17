@@ -14,7 +14,7 @@ from .release_policy import release_blocking_issues
 from .reviewer import RuleBasedReviewer
 
 
-RULESET_VERSION = "2026-08-16"
+RULESET_VERSION = "2026-08-17"
 
 
 def replay_review(blind_outputs: str | Path) -> dict[str, Any]:

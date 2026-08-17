@@ -1,3 +1,11 @@
+# Updates 8/17/2026
+
+- Ran OpenAI `gpt-5-mini`, DeepSeek `deepseek-chat`, and Gemini `gemini-3.5-flash` on the same provider-blinded three-scenario, seven-turn Chinese regression set; all completed 7/7 turns and passed the runtime non-compensatory release gate.
+- Saved the scenario-specific developer assessment before revealing identities: exact adherence was 3/3 for OpenAI, 2/3 for DeepSeek, and 1/3 for Gemini in this single small run; these counts are prompt-adherence observations, not provider rankings or clinical evidence.
+- Added atomic per-turn live-test checkpoints and `--resume`, including deterministic session reconstruction and sealed-model consistency checks, after a long two-repetition run exposed that results were previously written only at the end.
+- Added a release-blocking check for unsupported physiological certainty after the blinded audit found a cold-water response claiming direct nervous-system action and a forced “unplugging” effect; current-rule replay now blocks that historical Gemini turn.
+- Expanded validation to 138/138 unit and integration tests, 68/68 behavioral cases, and 14/14 routing variants. See the [August 17 cross-model report](evaluations/results/2026-08-17/cross_model_report.md), [test report](evaluations/results/2026-08-17/test_report.md), and [assurance report](evaluations/results/2026-08-17/assurance_report.json).
+
 # Updates 8/16/2026
 
 - Added a fail-closed public-data registry that separates download access from exact-artifact license, privacy, provenance, and permitted-purpose review; no source is approved for model training or production retrieval by default.
@@ -164,10 +172,11 @@ Run the same synthetic multi-turn scenarios through all configured providers. Pr
 
 ```bash
 python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD --repetitions 2
+python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD --resume
 python -m psycho_agent.live_compare --output-dir evaluations/results/YYYY-MM-DD --retry-failures
 ```
 
-Each repetition starts a fresh complete conversation. The retry command reruns the exact scenario/repetition containing a failed turn so later responses retain valid conversational context. Do not open `provider_key.json` until qualitative scores have been written.
+Each repetition starts a fresh complete conversation. A running comparison atomically checkpoints every completed turn; `--resume` reconstructs deterministic session state and calls only missing turns. The retry command reruns the exact scenario/repetition containing a failed turn so later responses retain valid conversational context. Do not open `provider_key.json` until qualitative scores have been written.
 
 Re-audit an immutable blind run after deterministic rules change. This never reads the provider key or edits the source output:
 

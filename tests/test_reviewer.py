@@ -180,6 +180,22 @@ class ReviewerTests(unittest.TestCase):
         )
         self.assertNotIn(IssueKind.UNSAFE_CLAIM, {issue.kind for issue in tentative.issues})
 
+    def test_detects_unsupported_physiological_mechanism_claim(self) -> None:
+        result = self.reviewer.review(
+            "冷水的物理刺激可以直接作用于你的神经系统，帮你强行拔掉电源。",
+            self.session,
+            self.plan,
+        )
+        self.assertIn(IssueKind.UNSAFE_CLAIM, {issue.kind for issue in result.issues})
+
+        tentative = self.reviewer.review(
+            "如果你愿意，可以用凉水洗手；有些人觉得这种感觉能短暂转移注意力，"
+            "但不保证会改变情绪。",
+            self.session,
+            self.plan,
+        )
+        self.assertNotIn(IssueKind.UNSAFE_CLAIM, {issue.kind for issue in tentative.issues})
+
     def test_exclusive_reliance_requires_ai_limit_and_real_world_bridge(self) -> None:
         self.session.user.exclusive_ai_reliance = True
         missing = self.reviewer.review(

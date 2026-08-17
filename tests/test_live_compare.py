@@ -8,6 +8,7 @@ from psycho_agent.live_compare import (
     automatic_scores,
     load_rubric,
     load_scenarios,
+    resume_comparison,
     retry_failed_scenarios,
     run_comparison,
 )
@@ -20,6 +21,19 @@ class FakeModel:
 
     def complete(self, system_prompt: str, user_prompt: str) -> str:
         return "你提到的这个具体变化值得先弄清楚。哪一部分对你影响最大？"
+
+
+class InterruptingModel(FakeModel):
+    def __init__(self, provider_name: str, interrupt_after: int) -> None:
+        super().__init__(provider_name)
+        self.calls = 0
+        self.interrupt_after = interrupt_after
+
+    def complete(self, system_prompt: str, user_prompt: str) -> str:
+        self.calls += 1
+        if self.calls > self.interrupt_after:
+            raise RuntimeError("simulated process interruption")
+        return super().complete(system_prompt, user_prompt)
 
 
 class LiveComparisonTests(unittest.TestCase):
@@ -170,6 +184,55 @@ class LiveComparisonTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(ValueError):
                 run_comparison(models, scenarios, directory, repetitions=11)
+
+    def test_interrupted_run_checkpoints_and_resumes_missing_scenarios(self) -> None:
+        scenarios = {
+            "version": "checkpoint-test",
+            "scenarios": [
+                {
+                    "id": "one",
+                    "title": "One",
+                    "intent": "Test",
+                    "turns": ["一", "继续"],
+                },
+                {"id": "two", "title": "Two", "intent": "Test", "turns": ["二"]},
+            ],
+        }
+        interrupted_models = {
+            "one": InterruptingModel("one", interrupt_after=1),
+            "two": FakeModel("two"),
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(RuntimeError, "simulated process interruption"):
+                run_comparison(
+                    interrupted_models, scenarios, directory, rng=random.Random(7)
+                )
+            checkpoint = json.loads(
+                (Path(directory) / "blind_outputs.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(checkpoint["checkpoint_status"], "running")
+            stored_scenarios = [
+                scenario
+                for model in checkpoint["models"].values()
+                for scenario in model["scenarios"]
+            ]
+            self.assertEqual(len(stored_scenarios), 1)
+            self.assertEqual(sum(len(scenario["turns"]) for scenario in stored_scenarios), 1)
+
+            changed_models = {name: FakeModel(name) for name in ("one", "two")}
+            changed_models["one"].model_name = "changed-after-checkpoint"
+            with self.assertRaisesRegex(ValueError, "Configured model changed"):
+                resume_comparison(changed_models, scenarios, directory)
+
+            models = {name: FakeModel(name) for name in ("one", "two")}
+            blind_path, resumed = resume_comparison(models, scenarios, directory)
+            completed = json.loads(blind_path.read_text(encoding="utf-8"))
+            self.assertEqual(resumed, 4)
+            self.assertEqual(completed["checkpoint_status"], "complete")
+            self.assertEqual(
+                sum(len(model["scenarios"]) for model in completed["models"].values()),
+                4,
+            )
 
 
 if __name__ == "__main__":

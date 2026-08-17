@@ -64,3 +64,5 @@
 {"id":"review-immediate-effect-promise","component":"review","draft":"跟着音乐走动三分钟，这个办法马上见效。","expected":{"issues":["unsafe_claim"]}}
 {"id":"review-rapid-effect-claim","component":"review","draft":"换件衣服能迅速打破环境带来的闷感。","expected":{"issues":["unsafe_claim"]}}
 {"id":"review-tentative-effect-language","component":"review","draft":"换件衣服可能有助于暂时转移一点注意力。","expected":{"issues":[]}}
+{"id":"review-unsupported-physiology","component":"review","draft":"冷水的物理刺激可以直接作用于你的神经系统，帮你从过载中强行拔掉电源。","expected":{"issues":["unsafe_claim"]}}
+{"id":"review-tentative-cold-water","component":"review","draft":"如果你愿意，可以用凉水洗手；有些人觉得这种感觉能短暂转移注意力，但不保证会改变情绪。","expected":{"issues":[]}}

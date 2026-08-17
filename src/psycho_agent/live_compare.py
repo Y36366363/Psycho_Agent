@@ -11,7 +11,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .config import ConfigurationError, ProviderSettings, load_dotenv
 from .engine import ConversationEngine
@@ -82,19 +82,52 @@ def _aliases(
     return dict(zip(provider_names, labels, strict=True))
 
 
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    """Replace a JSON artifact only after its complete checkpoint is on disk."""
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    temporary.replace(path)
+
+
 def _run_scenario(
     alias: str,
     model: TextModel,
     scenario: dict[str, Any],
     *,
     replicate: int = 1,
+    existing: dict[str, Any] | None = None,
+    checkpoint: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
-    """Run a complete scenario so retries retain their conversational context."""
+    """Run or reconstruct a scenario and checkpoint after every completed turn."""
     engine = ConversationEngine()
     session = SessionState(session_id=f"live-{alias}-{scenario['id']}-r{replicate}")
     generator = NaturalResponseGenerator(model, enable_model_review=False)
-    records: list[TurnRecord] = []
-    for turn_number, user_message in enumerate(scenario["turns"], start=1):
+    result = existing or {
+        "id": scenario["id"],
+        "replicate": replicate,
+        "title": scenario["title"],
+        "intent": scenario["intent"],
+        "turns": [],
+    }
+    existing_turns = list(result.get("turns", []))
+    if len(existing_turns) > len(scenario["turns"]):
+        raise ValueError(f"Checkpoint has too many turns for scenario {scenario['id']}.")
+
+    # Rebuild deterministic conversation state without repeating provider calls.
+    for turn_record, user_message in zip(existing_turns, scenario["turns"], strict=False):
+        engine.process(session, user_message)
+        session.review_issue_history.append(list(turn_record.get("final_issues", [])))
+        session.review_issue_history[:] = session.review_issue_history[-12:]
+        if turn_record.get("response"):
+            generator._remember(session, user_message, turn_record["response"])
+
+    records: list[dict[str, Any]] = existing_turns
+    remaining_messages = scenario["turns"][len(existing_turns) :]
+    for turn_number, user_message in enumerate(
+        remaining_messages, start=len(existing_turns) + 1
+    ):
         plan = engine.process(session, user_message)
         started = time.perf_counter()
         try:
@@ -137,14 +170,11 @@ def _run_scenario(
                 latency_seconds=round(elapsed, 3),
                 error=str(exc),
             )
-        records.append(record)
-    return {
-        "id": scenario["id"],
-        "replicate": replicate,
-        "title": scenario["title"],
-        "intent": scenario["intent"],
-        "turns": [asdict(record) for record in records],
-    }
+        records.append(asdict(record))
+        result["turns"] = records
+        if checkpoint is not None:
+            checkpoint(result)
+    return result
 
 
 def run_comparison(
@@ -165,17 +195,8 @@ def run_comparison(
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
 
-    by_alias: dict[str, Any] = {}
-    for provider_name, model in models.items():
-        alias = mapping[provider_name]
-        scenario_results = [
-            _run_scenario(alias, model, scenario, replicate=replicate)
-            for replicate in range(1, repetitions + 1)
-            for scenario in scenario_data["scenarios"]
-        ]
-        by_alias[alias] = {"scenarios": scenario_results}
-
-    ordered = {alias: by_alias[alias] for alias in sorted(by_alias)}
+    blind_path = destination / "blind_outputs.json"
+    key_path = destination / "provider_key.json"
     blind_data = {
         "run_at": datetime.now(UTC).isoformat(),
         "scenario_version": scenario_data.get("version"),
@@ -184,7 +205,10 @@ def run_comparison(
         "review_mode": (
             "deterministic rules with at most one rewrite; semantic model review disabled"
         ),
-        "models": ordered,
+        "checkpoint_status": "running",
+        "models": {
+            alias: {"scenarios": []} for alias in sorted(mapping.values())
+        },
     }
     key_data = {
         "sealed_at": blind_data["run_at"],
@@ -196,13 +220,119 @@ def run_comparison(
             for provider_name, alias in mapping.items()
         },
     }
+    # Seal the identity mapping and create an empty blind checkpoint before the
+    # first network request so an interrupted long run can be resumed safely.
+    _atomic_write_json(key_path, key_data)
+    _atomic_write_json(blind_path, blind_data)
+    _atomic_write_json(
+        destination / "automatic_scores.json",
+        {"status": "pending", "reason": "blind comparison is still running"},
+    )
+
+    for provider_name, model in models.items():
+        alias = mapping[provider_name]
+        for replicate in range(1, repetitions + 1):
+            for scenario in scenario_data["scenarios"]:
+                def checkpoint(result: dict[str, Any]) -> None:
+                    stored = blind_data["models"][alias]["scenarios"]
+                    stored[:] = [
+                        item
+                        for item in stored
+                        if not (
+                            item["id"] == result["id"]
+                            and int(item.get("replicate", 1)) == result["replicate"]
+                        )
+                    ]
+                    stored.append(result)
+                    _atomic_write_json(blind_path, blind_data)
+
+                result = _run_scenario(
+                    alias,
+                    model,
+                    scenario,
+                    replicate=replicate,
+                    checkpoint=checkpoint,
+                )
+                checkpoint(result)
+
+    blind_data["checkpoint_status"] = "complete"
+    _atomic_write_json(blind_path, blind_data)
+    return blind_path, key_path
+
+
+def resume_comparison(
+    models: dict[str, TextModel],
+    scenario_data: dict[str, Any],
+    output_dir: str | Path,
+) -> tuple[Path, int]:
+    """Resume missing complete scenarios from an interrupted blind run."""
+    destination = Path(output_dir)
     blind_path = destination / "blind_outputs.json"
     key_path = destination / "provider_key.json"
-    blind_path.write_text(
-        json.dumps(blind_data, ensure_ascii=False, indent=2), encoding="utf-8"
+    if not blind_path.is_file() or not key_path.is_file():
+        raise ValueError("Resume requires existing blind_outputs.json and provider_key.json.")
+    blind_data = json.loads(blind_path.read_text(encoding="utf-8"))
+    key_data = json.loads(key_path.read_text(encoding="utf-8"))
+    if blind_data.get("scenario_version") != scenario_data.get("version"):
+        raise ValueError("Scenario version differs from the interrupted run.")
+    repetitions = int(blind_data.get("repetitions", 1))
+    scenarios_by_id = {scenario["id"]: scenario for scenario in scenario_data["scenarios"]}
+    resumed = 0
+
+    for alias in sorted(blind_data["models"]):
+        mapping = key_data.get("mapping", {}).get(alias, {})
+        provider_name = mapping.get("provider")
+        if provider_name not in models:
+            raise ValueError(f"No configured model for the sealed provider behind {alias}.")
+        expected_model = mapping.get("model")
+        if models[provider_name].model_name != expected_model:
+            raise ValueError(f"Configured model changed for sealed alias {alias}.")
+        stored_scenarios = blind_data["models"][alias]["scenarios"]
+        for replicate in range(1, repetitions + 1):
+            for scenario_id, scenario in scenarios_by_id.items():
+                existing = next(
+                    (
+                        item
+                        for item in stored_scenarios
+                        if item["id"] == scenario_id
+                        and int(item.get("replicate", 1)) == replicate
+                    ),
+                    None,
+                )
+                if existing is not None and len(existing.get("turns", [])) == len(
+                    scenario["turns"]
+                ):
+                    continue
+
+                def checkpoint(result: dict[str, Any]) -> None:
+                    stored_scenarios[:] = [
+                        item
+                        for item in stored_scenarios
+                        if not (
+                            item["id"] == result["id"]
+                            and int(item.get("replicate", 1)) == result["replicate"]
+                        )
+                    ]
+                    stored_scenarios.append(result)
+                    _atomic_write_json(blind_path, blind_data)
+
+                result = _run_scenario(
+                    alias,
+                    models[provider_name],
+                    scenario,
+                    replicate=replicate,
+                    existing=existing,
+                    checkpoint=checkpoint,
+                )
+                checkpoint(result)
+                resumed += 1
+
+    blind_data["checkpoint_status"] = "complete"
+    blind_data.setdefault("resume_history", []).append(
+        {"resumed_at": datetime.now(UTC).isoformat(), "scenario_runs": resumed}
     )
-    key_path.write_text(json.dumps(key_data, ensure_ascii=False, indent=2), encoding="utf-8")
-    return blind_path, key_path
+    _atomic_write_json(blind_path, blind_data)
+    return blind_path, resumed
 
 
 def retry_failed_scenarios(
@@ -335,6 +465,11 @@ def main() -> None:
         help="Re-run complete scenarios containing failures without revealing the mapping",
     )
     parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Continue missing complete scenarios from an interrupted checkpoint",
+    )
+    parser.add_argument(
         "--providers",
         nargs="+",
         default=["openai", "deepseek", "gemini"],
@@ -349,11 +484,16 @@ def main() -> None:
         raise SystemExit(f"Configuration error: {exc}") from exc
     models = {item.provider: create_model(item) for item in settings}
     scenario_data = load_scenarios(args.scenarios)
+    if args.retry_failures and args.resume:
+        parser.error("--retry-failures and --resume cannot be used together")
     if args.retry_failures:
         blind_path, retried_count = retry_failed_scenarios(
             models, scenario_data, args.output_dir
         )
         print(f"Retried complete scenarios: {retried_count}")
+    elif args.resume:
+        blind_path, resumed_count = resume_comparison(models, scenario_data, args.output_dir)
+        print(f"Resumed complete scenarios: {resumed_count}")
     else:
         blind_path, _ = run_comparison(
             models,
