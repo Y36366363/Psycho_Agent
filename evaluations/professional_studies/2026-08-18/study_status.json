@@ -1,0 +1,61 @@
+{
+  "study_id": "PA-PRO-001",
+  "date": "2026-08-18",
+  "status": "awaiting_verified_professional_ratings",
+  "research_stage": "research_prototype",
+  "synthetic_only": true,
+  "generation": {
+    "base_model_controlled_across_arms": true,
+    "arm_count": 3,
+    "synthetic_cases": 24,
+    "complete_dialogues": 72,
+    "dialogue_turns_per_arm": 72,
+    "total_dialogue_turns": 216,
+    "provider_errors": 0,
+    "missing_turns": 0
+  },
+  "packet": {
+    "rubric_dimensions": 12,
+    "hard_failure_categories": 9,
+    "rating_rows": 72,
+    "reviewer_assignment_plans": [2, 3, 4, 5],
+    "minimum_ratings_per_dialogue": 2,
+    "all_visible_artifact_hashes_match": true,
+    "arm_or_model_leakage_detected": false,
+    "rating_validator_fixture": "passed",
+    "rating_validator_fixture_is_human_evidence": false
+  },
+  "external_human_evidence": {
+    "verified_professional_reviewers_finalized": 0,
+    "professional_ratings_present": false,
+    "inter_rater_reliability_available": false,
+    "comparative_conclusion_allowed": false
+  },
+  "recovery_audit": {
+    "occurred": true,
+    "reason": "An older serial collection process continued after its execution wrapper returned and overwrote the complete checkpoint with a partial snapshot.",
+    "action": "The exact stale process was terminated; complete blinded transcripts were restored programmatically from the already-created packet and its ignored dialogue-to-condition key.",
+    "arm_mapping_opened_or_printed": false,
+    "post_recovery_condition_counts": [24, 24, 24],
+    "post_recovery_packet_regenerated": true
+  },
+  "checksums": {
+    "study_outputs_sha256": "5309cee051070a6589adb7cbd3b054cd6c3fc20d451f344ea2b851e57341e4ff",
+    "rating_packet_sha256": "dd081afefb2ca8d10a15f45366eef19d2b22b0e0221716bced72802b555b3fde",
+    "packet_manifest_sha256": "b229803ac7333c05ad1bfa45433e490630764223cbfc16f0237bfa760754b3ca"
+  },
+  "remaining_code_blockers_before_first_reviewer": [],
+  "remaining_operational_blockers_before_first_reviewer": [
+    "Select the final 2-5 reviewer assignment plan.",
+    "Manually verify the first reviewer's current professional credential against an official source.",
+    "Complete an independent conflict-of-interest review.",
+    "Assign an opaque reviewer ID and securely deliver only reviewer-visible packet files."
+  ],
+  "prohibited_claims": [
+    "therapist replacement",
+    "clinical effectiveness",
+    "treatment benefit",
+    "clinical equivalence",
+    "production safety"
+  ]
+}

@@ -143,6 +143,17 @@ def agreement_report(ratings: list[Rating]) -> dict[str, Any]:
                     "quadratic_weighted_kappa": quadratic_weighted_kappa(
                         left_scores, right_scores
                     ),
+                    "mean_absolute_difference": round(
+                        mean(abs(a - b) for a, b in zip(left_scores, right_scores)), 4
+                    ),
+                    "severe_disagreement_count": sum(
+                        abs(a - b) >= 2 for a, b in zip(left_scores, right_scores)
+                    ),
+                    "severe_disagreement_items": [
+                        item
+                        for item, a, b in zip(shared, left_scores, right_scores)
+                        if abs(a - b) >= 2
+                    ],
                 }
             )
         report[dimension] = {

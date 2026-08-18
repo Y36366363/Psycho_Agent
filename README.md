@@ -1,3 +1,12 @@
+# Updates 8/18/2026
+
+- Shifted the primary research milestone from accumulating rules, features, and automated-test counts to obtaining external human evidence through `PA-PRO-001`, a provider-blinded professional evaluation study.
+- Froze 24 three-turn synthetic Chinese sessions spanning anxiety/distress, reassurance seeking, maladaptive certainty, grief, low motivation, alliance rupture, AI dependency, diagnosis and medication requests, indirect crisis language, explicit non-crisis denial, and listen-only boundaries; no patient or real-user data is included.
+- Preregistered a same-base-model comparison of plain LLM, a reasonably strong static therapist-prompt LLM, and Psycho Agent, with a paired balanced-support endpoint and a separate non-compensatory hard-safety-failure gate.
+- Replaced the earlier broad qualitative rubric for this study with 12 professional dimensions, explicit 1/3/5 anchors, acceptable/problematic decisions, nine hard-failure categories, within-case ranking, and exact agreement, quadratic weighted kappa, absolute-difference, severe-disagreement, and binary safety-agreement analysis.
+- Added resumable, per-turn checkpointed three-arm collection; per-case randomized packet generation; balanced 2–5 reviewer assignments; content-free file checksums; and a fail-closed CSV rating validator.
+- The generated package is explicitly marked `awaiting_verified_professional_ratings`. No professional rating, clinical effectiveness, therapist replacement, or production-safety claim is made. See the [study protocol](docs/professional-evaluation-study-2026-08-18.md), [preregistration](evaluations/professional_study/preregistration_v1.json), [study status](evaluations/professional_studies/2026-08-18/study_status.json), [integrity report](evaluations/results/2026-08-18/test_report.md), and [required/deferred boundary](docs/pre-review-required-and-deferred-2026-08-18.md).
+
 # Updates 8/17/2026
 
 - Ran OpenAI `gpt-5-mini`, DeepSeek `deepseek-chat`, and Gemini `gemini-3.5-flash` on the same provider-blinded three-scenario, seven-turn Chinese regression set; all completed 7/7 turns and passed the runtime non-compensatory release gate.
@@ -210,6 +219,24 @@ python -m psycho_agent.evaluation
 
 The behavioral suite is stored in `evaluations/behavior_cases.jsonl`. It checks safety contrast sets, explicit state extraction, user-controlled pacing, goal alignment, reviewer failures, and multi-turn routing. The stage-aware qualitative rubric is stored in `evaluations/qualitative_rubric.json`. These artifacts are engineering invariants, not a clinical validation score.
 
+Run or resume the frozen same-base-model professional study, then create the reviewer package. Do not open either ignored key before professional ratings are finalized:
+
+```bash
+python -m psycho_agent.professional_study run \
+  --provider openai \
+  --output-dir evaluations/professional_studies/YYYY-MM-DD \
+  --workers 6
+python -m psycho_agent.professional_study run \
+  --provider openai \
+  --output-dir evaluations/professional_studies/YYYY-MM-DD \
+  --resume --workers 6
+python -m psycho_agent.professional_study packet \
+  --study-outputs evaluations/professional_studies/YYYY-MM-DD/study_outputs.json \
+  --output-dir evaluations/professional_studies/YYYY-MM-DD/reviewer_packet
+```
+
+Before handoff, use `validate-rating` on a completed copy of `rating_form.csv`. This checks form integrity; reviewer credential and conflict-of-interest verification remain separate mandatory gates.
+
 Import an already-normalized, reviewed public-data artifact for an explicitly registered use. The command refuses output outside the ignored `data/public/` directory:
 
 ```bash
@@ -240,6 +267,7 @@ src/psycho_agent/
   models.py       typed conversation state and turn plans
   providers.py    OpenAI, DeepSeek, and Gemini adapters
   privacy.py      consent-gated long-term memory vault
+  professional_study.py frozen same-model three-arm collection and reviewer packet
   public_data.py  purpose-, license-, privacy-, and revision-gated data intake
   rating_service.py verified human rating intake and finalization
   reliability_evaluation.py versioned metamorphic and multi-turn route checks

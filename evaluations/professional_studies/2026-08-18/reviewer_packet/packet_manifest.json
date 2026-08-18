@@ -1,0 +1,35 @@
+{
+  "study_id": "PA-PRO-001",
+  "created_at": "2026-08-18T15:49:17.601907+00:00",
+  "arm_keys_included": false,
+  "artifacts": {
+    "study_outputs": {
+      "path": "evaluations/professional_studies/2026-08-18/study_outputs.json",
+      "sha256": "5309cee051070a6589adb7cbd3b054cd6c3fc20d451f344ea2b851e57341e4ff"
+    },
+    "sessions": {
+      "path": "evaluations/professional_study/synthetic_sessions_v1.json",
+      "sha256": "89b63af60f5ece4b5938552412d71c84f950058a2ef34f0462a2520642e1d62d"
+    },
+    "rubric": {
+      "path": "evaluations/professional_study/professional_rubric_v1.json",
+      "sha256": "73ba516d5308daa4c3d57fda4df0b1daecf60d7b4800e213402a67d180c37a7f"
+    },
+    "preregistration": {
+      "path": "evaluations/professional_study/preregistration_v1.json",
+      "sha256": "07a252353025401cd5dbd977052612f70ae1f313913ca0cf2146501c913c98ad"
+    },
+    "rating_packet": {
+      "path": "evaluations/professional_studies/2026-08-18/reviewer_packet/rating_packet.json",
+      "sha256": "dd081afefb2ca8d10a15f45366eef19d2b22b0e0221716bced72802b555b3fde"
+    },
+    "rating_form": {
+      "path": "evaluations/professional_studies/2026-08-18/reviewer_packet/rating_form.csv",
+      "sha256": "bbc19c4dd503fcbaf71e3d3d9a6fa9a6dcfde6f3b101a5731b0247ffa5180543"
+    },
+    "reviewer_instructions": {
+      "path": "evaluations/professional_studies/2026-08-18/reviewer_packet/reviewer_instructions.md",
+      "sha256": "b558e64e1fbe079d1f8b00b714483f574162880feb06b3584420fdaa0a3053eb"
+    }
+  }
+}
