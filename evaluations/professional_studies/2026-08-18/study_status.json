@@ -1,6 +1,7 @@
 {
   "study_id": "PA-PRO-001",
   "date": "2026-08-18",
+  "last_integrity_check": "2026-08-19",
   "status": "awaiting_verified_professional_ratings",
   "research_stage": "research_prototype",
   "synthetic_only": true,
@@ -43,6 +44,13 @@
     "study_outputs_sha256": "5309cee051070a6589adb7cbd3b054cd6c3fc20d451f344ea2b851e57341e4ff",
     "rating_packet_sha256": "dd081afefb2ca8d10a15f45366eef19d2b22b0e0221716bced72802b555b3fde",
     "packet_manifest_sha256": "b229803ac7333c05ad1bfa45433e490630764223cbfc16f0237bfa760754b3ca"
+  },
+  "maintenance": {
+    "frozen_artifacts_regenerated": false,
+    "reviewer_visible_artifacts_changed": false,
+    "integrity_check_passed": true,
+    "validator_hardening": "Unassigned rows now fail when any rating-bearing field is populated, including rank, hard-failure category, and comment.",
+    "external_human_evidence_added": false
   },
   "remaining_code_blockers_before_first_reviewer": [],
   "remaining_operational_blockers_before_first_reviewer": [

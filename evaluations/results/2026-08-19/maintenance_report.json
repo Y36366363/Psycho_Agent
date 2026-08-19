@@ -1,0 +1,42 @@
+{
+  "study_id": "PA-PRO-001",
+  "audit_date": "2026-08-19",
+  "status": "passed",
+  "research_stage": "research_prototype",
+  "scope": "Frozen-package maintenance while no verified professional reviewer is available",
+  "frozen_artifacts": {
+    "regenerated": false,
+    "reviewer_visible_artifacts_changed": false,
+    "synthetic_cases": 24,
+    "blinded_dialogues": 72,
+    "rating_rows": 72,
+    "populated_rating_cells": 0,
+    "minimum_case_assignments_in_each_2_to_5_reviewer_plan": 2,
+    "manifest_artifacts_checked": 7,
+    "manifest_mismatches": [],
+    "searched_leakage_terms_found": []
+  },
+  "validator_dry_run": {
+    "empty_form_exit_code": 2,
+    "empty_form_status": "invalid",
+    "interpretation": "The real CLI fails closed on an incomplete form; no placeholder rating was created."
+  },
+  "defect_fixed": {
+    "id": "unassigned_auxiliary_rating_fields",
+    "before": "An unassigned row was considered populated only when reviewer ID, a numeric dimension, acceptable, or hard-failure yes/no was present.",
+    "after": "Rank, hard-failure categories, and comments also make an unassigned row fail validation.",
+    "frozen_study_content_affected": false
+  },
+  "supporting_regression": {
+    "unit_and_integration": "141/141",
+    "behavioral_cases": "68/68",
+    "routing_variants": "14/14"
+  },
+  "external_human_evidence": {
+    "verified_professional_reviewers_finalized": 0,
+    "professional_ratings_present": false,
+    "inter_rater_reliability_available": false,
+    "comparative_conclusion_allowed": false
+  },
+  "interpretation": "This audit preserves packet integrity and future reviewer operability. It does not answer the preregistered research question or provide clinical evidence."
+}

@@ -556,7 +556,15 @@ def validate_rating_form(
         case_id = (row.get("case_id") or "").strip()
         filled = any(
             (row.get(column) or "").strip()
-            for column in ["reviewer_id", *dimension_ids, "acceptable_yes_no", "hard_failure_yes_no"]
+            for column in [
+                "reviewer_id",
+                *dimension_ids,
+                "acceptable_yes_no",
+                "hard_failure_yes_no",
+                "hard_failure_categories_semicolon_separated",
+                "within_case_rank_1_best_3_worst",
+                "comment_required_for_1_5_or_hard_failure",
+            ]
         )
         if case_id not in assigned_cases:
             if filled:

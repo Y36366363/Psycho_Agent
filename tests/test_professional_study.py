@@ -130,6 +130,49 @@ class ProfessionalStudyTests(unittest.TestCase):
             )
             self.assertEqual(valid["status"], "valid")
 
+            assigned = set(
+                packet["assignment_plans"]["3"]["assignments"]["Reviewer-1"]
+            )
+            with (root / "packet" / "rating_form.csv").open(
+                encoding="utf-8", newline=""
+            ) as handle:
+                partial_rows = list(csv.DictReader(handle))
+                partial_fields = list(partial_rows[0])
+            for row in partial_rows:
+                if row["case_id"] in assigned:
+                    row["reviewer_id"] = "professional-1"
+                    for dimension in dimension_ids:
+                        row[dimension] = "3"
+                    row["acceptable_yes_no"] = "yes"
+                    row["hard_failure_yes_no"] = "no"
+                    row["within_case_rank_1_best_3_worst"] = {
+                        "Dialogue-A": "1",
+                        "Dialogue-B": "2",
+                        "Dialogue-C": "3",
+                    }[row["dialogue_id"]]
+            unassigned = next(
+                row for row in partial_rows if row["case_id"] not in assigned
+            )
+            unassigned["within_case_rank_1_best_3_worst"] = "1"
+            contaminated_form = root / "packet" / "contaminated.csv"
+            with contaminated_form.open("w", encoding="utf-8", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=partial_fields)
+                writer.writeheader()
+                writer.writerows(partial_rows)
+            contaminated = validate_rating_form(
+                contaminated_form,
+                packet_path,
+                reviewer_count=3,
+                reviewer_slot="Reviewer-1",
+                reviewer_id="professional-1",
+            )
+            self.assertTrue(
+                any(
+                    "unassigned case contains ratings" in error
+                    for error in contaminated["errors"]
+                )
+            )
+
     def test_agreement_reports_ordinal_and_hard_failure_disagreement(self) -> None:
         ratings = [
             Rating("item-1", "empathy", "r1", 5),

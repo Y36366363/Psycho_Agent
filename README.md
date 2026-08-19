@@ -1,3 +1,11 @@
+# Updates 8/19/2026
+
+- Kept `PA-PRO-001` frozen while a real professional reviewer is not yet available: no sessions, prompts, responses, arm labels, rubric, endpoints, or reviewer-visible packet files were regenerated or changed.
+- Re-audited the existing packet in place: 24 cases, 72 blinded dialogues, 72 empty rating rows, zero populated rating cells, no searched arm/model/runtime leakage terms, all seven manifest hashes matched, and every dialogue remains assigned to at least two reviewers in each 2–5 reviewer plan.
+- Fixed one reviewer-workflow integrity gap: the rating validator now rejects unassigned cases when only a rank, hard-failure category, or comment was entered, instead of checking only numeric scores and primary yes/no fields.
+- Exercised the real `validate-rating` CLI against the untouched empty form and confirmed it fails closed; the repository regression remained 141/141, with 68/68 behavioral cases and 14/14 routing variants. These results preserve study operability only and are not external human or clinical evidence.
+- The study remains `awaiting_verified_professional_ratings` with zero professional ratings and no comparative or inter-rater conclusion. See the [August 19 maintenance report](evaluations/results/2026-08-19/test_report.md) and [machine-readable audit](evaluations/results/2026-08-19/maintenance_report.json).
+
 # Updates 8/18/2026
 
 - Shifted the primary research milestone from accumulating rules, features, and automated-test counts to obtaining external human evidence through `PA-PRO-001`, a provider-blinded professional evaluation study.
