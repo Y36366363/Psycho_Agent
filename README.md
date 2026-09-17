@@ -1,4 +1,69 @@
-# Updates 8/19/2026
+# Psycho Agent
+
+A safety-bounded research prototype for psychologically informed human–AI support, with structured conversation planning, synthetic evaluation, and a preregistered professional-review workflow.
+
+**Current stage:** Research prototype. The professional study `PA-PRO-001` is awaiting verified professional ratings. No clinical effectiveness or production-readiness claim is made.
+
+## Research Question
+
+Can structured conversation planning and explicit response-release boundaries improve professionally rated support quality and reduce predefined safety failures compared with plain and static-prompt LLM baselines?
+
+This is a research question, not an established result.
+
+## What the System Does
+
+- Tracks conversation state, user preferences, pacing, and goal alignment.
+- Selects between listening, clarification, alliance repair, and bounded practical support.
+- Reviews generated responses and permits at most one corrective rewrite.
+- Blocks predefined residual safety and alignment failures rather than releasing an unresolved response.
+- Provides a local authenticated Web prototype with consent-scoped memory controls.
+- Keeps engineering tests, professional review, clinical effectiveness, and deployment readiness as separate evidence gates.
+
+## Evaluation and Evidence
+
+| Evidence layer | Current status | What it can establish |
+|---|---|---|
+| Automated regression | Implemented | Behavior under specified test conditions |
+| Synthetic live dialogues | Developer-audited samples | Workflow feasibility and observed failure modes |
+| Professional blinded review | Awaiting verified ratings | Comparative professional judgments once completed |
+| Clinical effectiveness | Not established | Requires a separate appropriately reviewed participant study |
+| Production readiness | Not established | Requires independent operational, privacy, and safety review |
+
+Passing automated tests does not establish real-world safety or therapeutic effectiveness. Small developer-audited comparisons do not establish a stable provider ranking.
+
+## Professional Study: PA-PRO-001
+
+The frozen study compares three conditions using the same base model:
+
+1. Plain LLM.
+2. A reasonably strong static therapist-prompt LLM.
+3. Psycho Agent.
+
+The study contains 24 three-turn synthetic Chinese sessions and 72 blinded dialogues. No patient or real-user data is included.
+
+The protocol separates a paired support-quality endpoint from a non-compensatory hard-safety-failure gate. Reviewer qualification, conflicts of interest, rating integrity, and inter-rater agreement are handled explicitly.
+
+**Evidence status:** Zero professional ratings are reported in the supplied study record. No comparative or inter-rater conclusion is available.
+
+- [Study protocol](docs/professional-evaluation-study-2026-08-18.md)
+- [Preregistration](evaluations/professional_study/preregistration_v1.json)
+- [Study status](evaluations/professional_studies/2026-08-18/study_status.json)
+- [Assurance model](docs/assurance-model.md)
+
+The frozen reviewer packet should not be regenerated or modified merely to update this README.
+
+## Safety and Use Boundaries
+
+This is research-stage software, not medical care, diagnosis, emergency response, or a replacement for a licensed professional.
+
+Implemented safeguards are engineering controls, not guarantees of clinical safety. The local Web prototype is intended for development and evaluation, not public production deployment.
+
+## Development Log
+
+<details>
+<summary>Expand development history / 展开开发记录</summary>
+
+### Updates 8/19/2026
 
 - Kept `PA-PRO-001` frozen while a real professional reviewer is not yet available: no sessions, prompts, responses, arm labels, rubric, endpoints, or reviewer-visible packet files were regenerated or changed.
 - Re-audited the existing packet in place: 24 cases, 72 blinded dialogues, 72 empty rating rows, zero populated rating cells, no searched arm/model/runtime leakage terms, all seven manifest hashes matched, and every dialogue remains assigned to at least two reviewers in each 2–5 reviewer plan.
@@ -6,7 +71,7 @@
 - Exercised the real `validate-rating` CLI against the untouched empty form and confirmed it fails closed; the repository regression remained 141/141, with 68/68 behavioral cases and 14/14 routing variants. These results preserve study operability only and are not external human or clinical evidence.
 - The study remains `awaiting_verified_professional_ratings` with zero professional ratings and no comparative or inter-rater conclusion. See the [August 19 maintenance report](evaluations/results/2026-08-19/test_report.md) and [machine-readable audit](evaluations/results/2026-08-19/maintenance_report.json).
 
-# Updates 8/18/2026
+### Updates 8/18/2026
 
 - Shifted the primary research milestone from accumulating rules, features, and automated-test counts to obtaining external human evidence through `PA-PRO-001`, a provider-blinded professional evaluation study.
 - Froze 24 three-turn synthetic Chinese sessions spanning anxiety/distress, reassurance seeking, maladaptive certainty, grief, low motivation, alliance rupture, AI dependency, diagnosis and medication requests, indirect crisis language, explicit non-crisis denial, and listen-only boundaries; no patient or real-user data is included.
@@ -15,7 +80,7 @@
 - Added resumable, per-turn checkpointed three-arm collection; per-case randomized packet generation; balanced 2–5 reviewer assignments; content-free file checksums; and a fail-closed CSV rating validator.
 - The generated package is explicitly marked `awaiting_verified_professional_ratings`. No professional rating, clinical effectiveness, therapist replacement, or production-safety claim is made. See the [study protocol](docs/professional-evaluation-study-2026-08-18.md), [preregistration](evaluations/professional_study/preregistration_v1.json), [study status](evaluations/professional_studies/2026-08-18/study_status.json), [integrity report](evaluations/results/2026-08-18/test_report.md), and [required/deferred boundary](docs/pre-review-required-and-deferred-2026-08-18.md).
 
-# Updates 8/17/2026
+### Updates 8/17/2026
 
 - Ran OpenAI `gpt-5-mini`, DeepSeek `deepseek-chat`, and Gemini `gemini-3.5-flash` on the same provider-blinded three-scenario, seven-turn Chinese regression set; all completed 7/7 turns and passed the runtime non-compensatory release gate.
 - Saved the scenario-specific developer assessment before revealing identities: exact adherence was 3/3 for OpenAI, 2/3 for DeepSeek, and 1/3 for Gemini in this single small run; these counts are prompt-adherence observations, not provider rankings or clinical evidence.
@@ -23,7 +88,7 @@
 - Added a release-blocking check for unsupported physiological certainty after the blinded audit found a cold-water response claiming direct nervous-system action and a forced “unplugging” effect; current-rule replay now blocks that historical Gemini turn.
 - Expanded validation to 138/138 unit and integration tests, 68/68 behavioral cases, and 14/14 routing variants. See the [August 17 cross-model report](evaluations/results/2026-08-17/cross_model_report.md), [test report](evaluations/results/2026-08-17/test_report.md), and [assurance report](evaluations/results/2026-08-17/assurance_report.json).
 
-# Updates 8/16/2026
+### Updates 8/16/2026
 
 - Added a fail-closed public-data registry that separates download access from exact-artifact license, privacy, provenance, and permitted-purpose review; no source is approved for model training or production retrieval by default.
 - Added a governed normalized-JSONL importer with upstream revision pinning, private ignored output enforcement, metadata minimization, hashed record IDs, direct-identifier screening, deduplication, and content-free checksum reports.
@@ -36,7 +101,7 @@
 - Ran two focused real-API regressions across OpenAI, DeepSeek, and Gemini: 12/12 turns completed. The second run reduced runtime deterministic fallbacks from 3/3 to 1/3; current-rule replay cleared the remaining false positive and identified one OpenAI rapid-effect assertion as a release blocker.
 - Expanded validation to 136/136 unit and integration tests, 66/66 behavioral cases, and 14/14 routing variants. The project remains a research prototype; see the [August 16 release-gate report](evaluations/results/2026-08-16/release_gate_report.md), [test report](evaluations/results/2026-08-16/test_report.md), and [assurance report](evaluations/results/2026-08-16/assurance_report.json).
 
-# Updates 8/15/2026
+### Updates 8/15/2026
 
 - Added repeated provider-blind comparison (`--repetitions 1–10`) with complete-scenario replicate IDs, bounded replicate-aware retries, completion rates, final-issue rates, rewrite rates, and median/max successful latency.
 - Ran OpenAI `gpt-5-mini`, DeepSeek `deepseek-chat`, and Gemini `gemini-3.5-flash` on the same three synthetic multi-turn cases twice: all completed 14/14 turns per provider; blinded exact adherence was 5/6 for DeepSeek, 4/6 for Gemini, and 2/6 for OpenAI in this small developer audit.
@@ -45,7 +110,7 @@
 - Prepared an 18-session provider-free professional rating packet with replicate identities retained only in its ignored key; no professional ratings are claimed or fabricated.
 - Expanded the suite to 123 passing unit and integration tests, 64/64 behavioral cases, and 14/14 routing variants. See the [August 15 feasibility report](evaluations/results/2026-08-15/feasibility_report.md), [test report](evaluations/results/2026-08-15/test_report.md), and [assurance report](evaluations/results/2026-08-15/assurance_report.json).
 
-# Updates 8/14/2026
+### Updates 8/14/2026
 
 - Fixed a multi-turn crisis continuity defect: unresolved second and later crisis turns now retain locale-verified call/message actions, AI-limit language, safety questions, and the same non-compensatory crisis audit as the first turn.
 - Added Unicode NFKC, zero-width-character removal, and conservative Chinese separator normalization so formatting changes do not silently bypass tested crisis routes; explicit-denial negative controls prevent indiscriminate escalation.
@@ -54,7 +119,7 @@
 - Added privacy-minimized decision evidence with phase, strategy, risk category, named decision basis, action kinds, and policy versions. It stores no user or assistant text and retains only the latest 20 records.
 - Expanded the suite to 114 passing unit and integration tests, 56/56 behavioral cases, and 14/14 routing-reliability variants. See the [August 14 reliability validation](docs/reliability-validation-2026-08-14.md), [machine-readable report](evaluations/results/2026-08-14/reliability_report.json), and [test report](evaluations/results/2026-08-14/test_report.md).
 
-# Updates 8/13/2026
+### Updates 8/13/2026
 
 - Added an [August 13 competitive review](docs/competitive-review-2026-08-13.md) covering CounselBench, VERA-MH, MHSafeEval, DialogGuard, CAPE's market sample, protocol-safety research, and PsychAgent, with explicit adopt/defer/reject decisions.
 - Added a clinical-scope gate: crisis routing always remains first, while non-crisis requests for diagnosis, medication changes, unsupervised trauma exposure, or dangerous eating-disorder procedures receive a fixed non-abandoning boundary and a practical bridge to qualified care.
@@ -69,7 +134,7 @@
 - Expanded crisis triage for indirect preparatory language involving means, timing, goodbye letters, and “not waking up,” with Chinese/English and self/other contrast tests while preserving household-item negative controls.
 - Expanded the suite to 100 passing unit and HTTP integration tests and 50/50 offline behavioral cases. See the [assurance model](docs/assurance-model.md), [machine-readable assurance report](evaluations/results/2026-08-13/assurance_report.json), and [test report](evaluations/results/2026-08-13/test_report.md).
 
-# Updates 8/12/2026
+### Updates 8/12/2026
 
 - Replaced the optional in-process-only memory path with an authenticated SQLite option that encrypts every saved value using AES-256-GCM, binds ciphertext to its owner and purpose, and preserves consent, view/export, retention, scope revocation, and deletion controls.
 - Added salted scrypt password authentication, short-lived server-side sessions, CSRF enforcement, login throttling, owner isolation, security headers, and ignored database/key locations.
@@ -93,7 +158,7 @@
 - Expanded the suite to 62 passing unit tests and 41/41 offline behavioral cases.
 - Added a [2026 competitive review](docs/competitive-review-2026-08-12.md) covering PsychAgent, ESC-Judge, ESC-Eval, clinician-rated artificial-user evaluation, cognitive-restructuring agents, Therabot, and WHO governance guidance.
 
-# Updates 8/10/2026
+### Updates 8/10/2026
 
 - Verified live connectivity with configured OpenAI, DeepSeek, and Gemini credentials without printing or committing secrets; updated the Gemini default to `gemini-3.5-flash` after the former model rejected new-user requests.
 - Added a provider-blinded live comparison runner and ran all three providers over the same four synthetic, 17-turn scripts before revealing their identities.
@@ -104,7 +169,7 @@
 - Expanded the suite to 48 passing unit tests while retaining 29/29 offline behavioral cases.
 - Published the [August 10 blinded comparison report](evaluations/results/2026-08-10/comparison_report.md), including limitations and concrete next-step recommendations.
 
-# Updates 8/9/2026
+### Updates 8/9/2026
 
 - Added a research landscape comparing Woebot, Therabot, ESConv, PsyQA, SoulChat, CPsyCoun, recent safety findings, and Psycho Agent's current gaps.
 - Added 29 offline behavioral cases and multi-turn scenario evaluation covering safety contrasts, state extraction, alliance repair, and response-review failures.
@@ -119,11 +184,7 @@
 - Added structured session state, staged intake, strategy routing, crisis-risk triage, repetition control, and unit tests.
 - Documented the product boundaries: transparent AI support for everyday distress, not diagnosis or a replacement for professional care.
 
-# Psycho Agent
-
-Psycho Agent is an experimental, human-centered psychological support agent. Its goal is not to imitate a therapist's identity or simply sound agreeable. It tries to follow a disciplined support process: understand the person's current state, decide what kind of help is appropriate, respond naturally, track progress, and avoid repeating generic advice.
-
-The current release plans each conversation turn, generates a provider-backed natural reply, reviews the draft, and performs at most one corrective rewrite. Two high-impact residual failures—AI-dependency encouragement and reinforcement of unsupported certainty—fall back to a deterministic safe response without another model call. An authenticated local Web prototype now provides encrypted-memory controls and embedded crisis actions; public production deployment remains a later milestone.
+</details>
 
 ## Product principles
 
@@ -156,6 +217,10 @@ The system is intentionally provider-neutral. The orchestration layer decides *w
 ## Run the demo
 
 Requires Python 3.11 or newer.
+
+Planning-only mode and offline tests make no provider API calls. Provider-backed responses, live comparisons, and professional-study collection require credentials and may incur API charges.
+
+Use synthetic inputs for development. Do not commit API keys, private conversations, memory databases, or blinded-study identity keys.
 
 ```bash
 python -m pip install -e .
@@ -302,11 +367,12 @@ This repository is research-stage software. It must not be presented as medical 
 
 ## Roadmap
 
-1. Recruit and independently verify qualified reviewers to complete the blind packets and establish inter-rater reliability.
-2. Commission jurisdiction-specific legal/privacy review, threat modeling, penetration testing, and clinical safety review.
-3. Move local secrets and SQLite data to managed identity, key management, encrypted backups, rotation, and production TLS.
-4. Add provider fallback and cost instrumentation without logging private content.
-5. Expand localized resources and synthetic profiles through regional and clinical review, with scheduled resource re-verification.
+1. Recruit and independently verify qualified professional reviewers.
+2. Complete the frozen PA-PRO-001 blinded evaluation without changing its conditions or endpoints.
+3. Report support-quality comparisons, hard safety failures, inter-rater agreement, and study limitations.
+4. Use the completed review to define a separately versioned follow-up study.
+5. Consider participant studies only after appropriate ethics, privacy, and clinical oversight.
+6. Defer public deployment until independent security, privacy, operational, and clinical-safety reviews are complete.
 
 ## Research review
 
